@@ -34,7 +34,7 @@ class Params(object):
         self.deformator_lr = 0.0001
         self.shift_predictor_lr = 0.0001
         self.n_steps = 2*int(1e+5)
-        self.batch_size = 10
+        self.batch_size = 6
         self.max_latent_ind = 120
 
         self.label_weight = 2.0
@@ -202,7 +202,6 @@ class Trainer(object):
                 z = deformator(z)
             else:
                 z_shifted = z + deformator(z_shift)
-            print(z.shape)
             imgs = G(z)
             imgs_shifted = G(z_shifted)
 
