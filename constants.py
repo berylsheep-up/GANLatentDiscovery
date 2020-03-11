@@ -29,4 +29,5 @@ WEIGHTS = {
     'ProgGAN': 'models/pretrained/ProgGAN/100_celeb_hq_network-snapshot-010403.pth',
     'SN_MNIST': 'models/pretrained/GANs/SN_MNIST',
     'Anime_64': 'models/pretrained/GANs/SN_Anime',
+    'StyleGAN': 'models/pretrained/StyleGAN/pytorch/2019-04-30-stylegan-danbooru2018-portraits-02095-066083.pt'
 }

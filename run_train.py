@@ -9,10 +9,11 @@ import matplotlib
 matplotlib.use("Agg")
 
 from constants import DEFORMATOR_TYPE_DICT, DEFORMATOR_LOSS_DICT, SHIFT_DISTRIDUTION_DICT, WEIGHTS
-from models.gan_load import make_big_gan, make_proggan, make_external
+from models.gan_load import make_big_gan, make_proggan, make_external, make_stylegan
 from latent_deformator import LatentDeformator
 from latent_shift_predictor import ResNetShiftPredictor, LeNetShiftPredictor
 from trainer import Trainer, Params
+
 
 
 def main():
@@ -21,8 +22,8 @@ def main():
         parser.add_argument('--{}'.format(key), type=type(val), default=None)
 
     parser.add_argument('--args', type=str, default=None, help='json with all arguments')
-    parser.add_argument('--out', type=str, required=True)
-    parser.add_argument('--gan_type', type=str, choices=WEIGHTS.keys())
+    parser.add_argument('--out', type=str, default='./output')
+    parser.add_argument('--gan_type', type=str, choices=WEIGHTS.keys(), default='StyleGAN')
     parser.add_argument('--gan_weights', type=str, default=None)
     parser.add_argument('--target_class', type=int, default=239)
     parser.add_argument('--json', type=str)
@@ -67,6 +68,8 @@ def main():
 
     if args.gan_type == 'BigGAN':
         G = make_big_gan(weights_path, args.target_class).eval()
+    elif args.gan_type == 'StyleGAN':
+        G = make_stylegan(weights_path)
     elif args.gan_type == 'ProgGAN':
         G = make_proggan(weights_path).eval()
     else:

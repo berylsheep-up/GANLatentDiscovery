@@ -5,7 +5,9 @@ from torch import nn
 from models.BigGAN import utils
 from models.BigGAN import BigGAN
 from models.ProgGAN.model import Generator as ProgGenerator
+from models.StyleGAN.stylegan_layers import  G_mapping,G_synthesis
 from GANs.load import load_model_from_state_dict
+from collections import OrderedDict
 
 
 class ConditionedBigGAN(nn.Module):
@@ -61,6 +63,22 @@ def make_proggan(weights_root):
 
     setattr(model, 'dim_z', [512, 1, 1])
     return model
+
+def make_stylegan(weights_root):
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    g_all = nn.Sequential(OrderedDict([
+    ('g_mapping', G_mapping()),
+    #('truncation', Truncation(avg_latent)),
+    ('g_synthesis', G_synthesis(resolution=512))    
+    ]))
+
+    print(weights_root,device)
+    g_all.load_state_dict(torch.load(weights_root, map_location=device))
+    g_all.eval()
+    g_all.to(device)
+
+    setattr(model, 'dim_z', [512, 1, 1])
+    return g_all
 
 
 def make_external(gan_dir):
