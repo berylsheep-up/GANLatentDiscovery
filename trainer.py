@@ -202,6 +202,7 @@ class Trainer(object):
                 z = deformator(z)
             else:
                 z_shifted = z + deformator(z_shift)
+            print(z.shape)
             imgs = G(z)
             imgs_shifted = G(z_shifted)
 
