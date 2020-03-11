@@ -72,12 +72,11 @@ def make_stylegan(weights_root):
     ('g_synthesis', G_synthesis(resolution=512))    
     ]))
 
-    print(weights_root,device)
     g_all.load_state_dict(torch.load(weights_root, map_location=device))
     g_all.eval()
     g_all.to(device)
 
-    setattr(model, 'dim_z', [512, 1, 1])
+    setattr(g_all, 'dim_z', [512])
     return g_all
 
 
