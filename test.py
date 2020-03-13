@@ -34,13 +34,12 @@ def main():
     parser.add_argument('--shift_distribution_key', type=str,
                         choices=SHIFT_DISTRIDUTION_DICT.keys())
 
-    parser.add_argument('--seed', type=int, default=2)
+    parser.add_argument('--seed', type=int, default=10)
     parser.add_argument('--device', type=int, default=0)
 
     args = parser.parse_args()
     torch.cuda.set_device(args.device)
-    random.seed(args.seed)
-    torch.random.manual_seed(args.seed)
+
 
     
     # save run params
@@ -65,14 +64,15 @@ def main():
     deformator = LatentDeformator(G.dim_z,type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
     deformator.load_state_dict(torch.load(args.deformator_path, map_location=torch.device('cpu')))
 
-    fig = make_interpolation_chart(G, deformator=deformator,
-                             shifts_r=10, shifts_count=5,
-                             dims=None, dims_count=5, texts=None, **kwargs)
-    fig_to_image(fig).convert("RGB").save(
-                os.path.join(args.images_dir, 'test_90000.jpg')
+    for seed in range(args.seed):
+        print("genertering {}'s seed images".format(seed))
+        random.seed(seed)
+        torch.random.manual_seed(seed)
 
-
-
+        fig = make_interpolation_chart(G, deformator=deformator,
+                                 shifts_r=10, shifts_count=3,
+                                 dims=None, dims_count=10, texts=None, dpi=1024)
+        fig_to_image(fig).convert("RGB").save(os.path.join(args.images_dir, 'test_{}.jpg'.format(seed)))
 
 if __name__ == '__main__':
     main()
