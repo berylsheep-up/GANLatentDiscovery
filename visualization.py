@@ -21,9 +21,10 @@ def fig_to_image(fig):
 def interpolate(G, z, shifts_r, shifts_count, dim, deformator=None, with_central_border=False):
     shifted_images = []
     tmp = []
-    shift_time = int(shifts_r / shifts_count) + 1
+    shift_time = 0
     batch_num = z.shape[0]
     for shift in np.arange(-shifts_r, shifts_r + 1e-9, shifts_r / shifts_count):
+        shift_time += 1
         if deformator is not None:
             z_deformed = z + deformator(one_hot(z.shape[1:], shift, dim).cuda())
         else:
@@ -76,7 +77,6 @@ def make_interpolation_chart(G, deformator=None, z=None,
         rows_count = len(imgs) + 1
     else:
         rows_count = len(imgs)
-    print(rows_count)
     fig, axs = plt.subplots(rows_count, **kwargs)
 
 
