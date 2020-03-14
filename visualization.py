@@ -34,9 +34,10 @@ def interpolate(G, z, shifts_r, shifts_count, dim, deformator=None, with_central
 
         for index in range(shifted_image.shape[0]):
             tmp.append(shifted_image[index])
- 
+        print(len(tmp)) 
     for single_img in range(batch_num):
         for shift in range(shift_time):
+            print(shift*batch_num + single_img)
             shifted_images.append(tmp[shift*batch_num + single_img])
 
     return shifted_images
