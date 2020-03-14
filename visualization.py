@@ -96,7 +96,6 @@ def make_interpolation_chart(G, deformator=None, z=None,
     if deformator is not None and deformator_is_training:
         deformator.train()
 
-    fig.tight_layout()#调整整体空白
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
                 wspace=None, hspace=0)#调整子图间距
 
