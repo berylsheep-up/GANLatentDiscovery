@@ -41,6 +41,10 @@ def main():
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--device', type=int, default=0)
 
+    parser.add_argument('--continue_train', type=bool, default=True)
+    parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
+    parser.add_argument('--shift_predictor_path', type=str, default='output/models/shift_predictor_190000.pt')
+
     args = parser.parse_args()
     torch.cuda.set_device(args.device)
     random.seed(args.seed)
@@ -75,15 +79,23 @@ def main():
     else:
         G = make_external(weights_path).eval()
 
-    deformator = LatentDeformator(G.dim_z,
-                                  type=DEFORMATOR_TYPE_DICT[args.deformator],
-                                  random_init=args.deformator_random_init).cuda()
 
+    
     if args.shift_predictor == 'ResNet':
         shift_predictor = ResNetShiftPredictor(G.dim_z, args.shift_predictor_size).cuda()
     elif args.shift_predictor == 'LeNet':
         shift_predictor = LeNetShiftPredictor(
             G.dim_z, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
+    if args.continue_train:
+        deformator = LatentDeformator(G.dim_z,
+                                      type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
+        deformator.load_state_dict(torch.load(args.deformator_path, map_location=torch.device('cpu')))
+
+        shift_predictor.load_state_dict(torch.load(args.shift_predictor_path, map_location=torch.device('cpu')))
+    else:
+        deformator = LatentDeformator(G,dim_z, 
+            type=DEFORMATOR_TYPE_DICT[args.deformator], 
+            random_init=args.deformator_random_init).cuda()
 
     # training
     args.shift_distribution = SHIFT_DISTRIDUTION_DICT[args.shift_distribution_key]
