@@ -23,6 +23,7 @@ class LatentDeformator(nn.Module):
         super(LatentDeformator, self).__init__()
         self.type = type
         self.input_dim = np.product(target_dim)
+        # np.product 将数组内所有元素乘起来
         self.out_dim = out_dim
         if out_dim is None:
             self.out_dim = self.input_dim
@@ -86,6 +87,7 @@ class LatentDeformator(nn.Module):
         elif self.type == DeformatorType.ORTHO:
             mat = torch_expm((self.log_mat_half - self.log_mat_half.transpose(0, 1)).unsqueeze(0))
             out = F.linear(input, mat)
+            # out = input*mat_T + bias
         elif self.type == DeformatorType.RANDOM:
             self.linear = self.linear.to(input.device)
             out = F.linear(input, self.linear)

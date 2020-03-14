@@ -77,6 +77,12 @@ class Trainer(object):
         self.fixed_test_noise = None
 
     def make_shifts(self, latent_dim):
+        '''
+        Returns:
+            target_indices: one hot's index
+            z_shift: one hot 向量
+            shift: z_shift one hot处的值，即偏移量
+        '''
         target_indices = torch.randint(0, self.p.max_latent_ind, [self.p.batch_size], device='cuda')
         if self.p.shift_distribution == ShiftDistribution.NORMAL:
             shifts =  torch.randn(target_indices.shape, device='cuda')
