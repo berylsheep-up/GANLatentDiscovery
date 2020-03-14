@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--shift_distribution_key', type=str,
                         choices=SHIFT_DISTRIDUTION_DICT.keys())
 
-    parser.add_argument('--seed', type=int, default=10)
+    parser.add_argument('--seed', type=int, default=3)
     parser.add_argument('--device', type=int, default=0)
 
     args = parser.parse_args()
@@ -66,7 +66,7 @@ def main():
     random.seed(args.seed)
     torch.random.manual_seed(args.seed)
     z = make_noise(batch = 5,dim = G.dim_z).cuda()
-    dims = [1]
+    dims = [100,101]
 
     fig = make_interpolation_chart(G, deformator=deformator, z = z,
                              shifts_r=10, shifts_count=3,
