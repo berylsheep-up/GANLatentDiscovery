@@ -14,14 +14,14 @@ from latent_deformator import LatentDeformator
 from latent_shift_predictor import ResNetShiftPredictor, LeNetShiftPredictor
 from trainer import Trainer, Params
 
-from argsions.train_argsions import Trainargsions
+from options.train_options import TrainOptions
 import graphs
 from utils import util
 from utils.util import EasyDict
 
 
 def main():
-    targsion = Trainargsions()
+    targsion = TrainOptions()
     
     for key, val in Params().__dict__.items():
         targsion.parser.add_argument('--{}'.format(key), type=type(val), default=None)
@@ -61,13 +61,13 @@ def main():
             args.__dict__.update(**args_dict)
 
     # save run params
-    if not os.path.isdir(args.out):
-        os.makedirs(args.out)
-    with open(os.path.join(args.out, 'args.json'), 'w') as args_file:
-        json.dump(args.__dict__, args_file)
-    with open(os.path.join(args.out, 'command.sh'), 'w') as command_file:
-        command_file.write(' '.join(sys.argv))
-        command_file.write('\n')
+    #if not os.path.isdir(args.out):
+    #    os.makedirs(args.out)
+    #with open(os.path.join(args.out, 'args.json'), 'w') as args_file:
+    #    json.dump(args.__dict__, args_file)
+    #with open(os.path.join(args.out, 'command.sh'), 'w') as command_file:
+    #    command_file.write(' '.join(sys.argv))
+    #    command_file.write('\n')
 
     # init models
     if args.gan_weights is not None:
