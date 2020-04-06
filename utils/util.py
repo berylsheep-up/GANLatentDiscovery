@@ -1,6 +1,21 @@
 import numpy as np
 import torch
 
+class EasyDict(dict):
+    """便利类，其行为类似于dict，但允许使用属性语法进行访问。"""
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self[name] = value
+
+    def __delattr__(self, name: str) -> None:
+        del self[name]
+
 def make_noise(batch, dim):
     if isinstance(dim, int):
         dim = [dim]
