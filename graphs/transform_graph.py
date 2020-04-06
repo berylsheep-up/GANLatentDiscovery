@@ -273,6 +273,6 @@ def get_transform_graphs(model):
 
     # graphs = [ColorGraph, ColorLabGraph, ZoomGraph, ShiftXGraph, ShiftYGraph,
     #           Rotate2DGraph, Rotate3DGraph]
-    graphs = [ColorGraph, ColorLabGraph, ZoomGraph, ShiftXGraph, ShiftYGraph]
+    graphs = [ColorGraph, ZoomGraph, ShiftXGraph, ShiftYGraph]
 
     return graphs
