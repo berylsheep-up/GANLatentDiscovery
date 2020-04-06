@@ -152,9 +152,9 @@ class Trainer(object):
 
     def save_models(self, deformator, shift_predictor, step):
         torch.save(deformator.state_dict(),
-                   os.path.join(self.models_dir, 'deformator_{}.pt'.format(step)))
+                   os.path.join(self.models_dir, 'transform_deformator_{}.pt'.format(step)))
         torch.save(shift_predictor.state_dict(),
-                   os.path.join(self.models_dir, 'shift_predictor_{}.pt'.format(step)))
+                   os.path.join(self.models_dir, 'transform_shift_predictor_{}.pt'.format(step)))
 
     def log_accuracy(self, G, deformator, shift_predictor, step):
         deformator.eval()

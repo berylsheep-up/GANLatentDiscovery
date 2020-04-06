@@ -45,7 +45,7 @@ def main():
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--device', type=int, default=0)
 
-    parser.add_argument('--continue_train', type=bool, default=True)
+    parser.add_argument('--continue_train', type=bool, default=False)
     parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
     parser.add_argument('--shift_predictor_path', type=str, default='output/models/shift_predictor_190000.pt')
 
@@ -108,7 +108,7 @@ def main():
 
     transform_type = ['zoom','shiftx','color','shifty']
     transform_model = EasyDict()
-    for a_type in transform_type:
+    for a_type in transform_type: 
         model = graphs.find_model_using_name(opt.model, opt.transform)
         g = model(**graph_kwargs)
         transform_model.a_type = EasyDict(model=g)
