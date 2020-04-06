@@ -21,9 +21,10 @@ def fig_to_image(fig):
 def interpolate(G, z, shifts_r, shifts_count, dim, deformator=None, with_central_border=False):
     shifted_images = []
     tmp = []
-    shift_time = int(shifts_r / shifts_count)*2 + 1
+    shift_time = 0
     batch_num = z.shape[0]
     for shift in np.arange(-shifts_r, shifts_r + 1e-9, shifts_r / shifts_count):
+        shift_time += 1
         if deformator is not None:
             z_deformed = z + deformator(one_hot(z.shape[1:], shift, dim).cuda())
         else:
@@ -34,10 +35,8 @@ def interpolate(G, z, shifts_r, shifts_count, dim, deformator=None, with_central
 
         for index in range(shifted_image.shape[0]):
             tmp.append(shifted_image[index])
-        print(len(tmp)) 
     for single_img in range(batch_num):
         for shift in range(shift_time):
-            print(shift*batch_num + single_img)
             shifted_images.append(tmp[shift*batch_num + single_img])
 
     return shifted_images
@@ -78,7 +77,6 @@ def make_interpolation_chart(G, deformator=None, z=None,
         rows_count = len(imgs) + 1
     else:
         rows_count = len(imgs)
-    print(rows_count)
     fig, axs = plt.subplots(rows_count, **kwargs)
 
 
@@ -98,7 +96,6 @@ def make_interpolation_chart(G, deformator=None, z=None,
     if deformator is not None and deformator_is_training:
         deformator.train()
 
-    fig.tight_layout()#调整整体空白
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
                 wspace=None, hspace=0)#调整子图间距
 
