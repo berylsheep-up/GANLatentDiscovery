@@ -14,6 +14,10 @@ from latent_deformator import LatentDeformator
 from latent_shift_predictor import ResNetShiftPredictor, LeNetShiftPredictor
 from trainer import Trainer, Params
 
+from options.train_options import TrainOptions
+import graphs
+from utils import util
+from utils.util import EasyDict
 
 
 def main():
@@ -97,11 +101,23 @@ def main():
             type=DEFORMATOR_TYPE_DICT[args.deformator], 
             random_init=args.deformator_random_init).cuda()
 
+    # transform
+    opt = TrainOptions().parse()
+
+    graph_kwargs = util.set_graph_kwargs(opt)
+
+    transform_type = ['zoom','shiftx','color','shifty']
+    transform_model = EasyDict()
+    for a_type in transform_type:
+        model = graphs.find_model_using_name(opt.model, opt.transform)
+        g = model(**graph_kwargs)
+        transform_model.a_type = EasyDict(model=g)
+
     # training
     args.shift_distribution = SHIFT_DISTRIDUTION_DICT[args.shift_distribution_key]
     args.deformation_loss = DEFORMATOR_LOSS_DICT[args.deformation_loss]
     trainer = Trainer(params=Params(**args.__dict__), out_dir=args.out, out_json=args.json)
-    trainer.train(G, deformator, shift_predictor)
+    trainer.train(G, deformator, shift_predictor, transform_model)
 
 
 if __name__ == '__main__':

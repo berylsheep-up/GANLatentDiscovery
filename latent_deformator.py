@@ -82,6 +82,7 @@ class LatentDeformator(nn.Module):
             out  = self.linear(input)
         elif self.type == DeformatorType.PROJECTIVE:
             input_norm = torch.norm(input, dim=1, keepdim=True)
+            # torch.norm : 对输入的tensor求范数
             out = self.linear(input)
             out = (input_norm / torch.norm(out, dim=1, keepdim=True)) * out
         elif self.type == DeformatorType.ORTHO:
