@@ -7,14 +7,6 @@ import sys
 import os
 from collections import OrderedDict
 
-import sys
-sys.path.append('resources/stylegan')
-import copy
-import dnnlib
-from dnnlib import EasyDict
-import config
-from metrics import metric_base
-
 class TrainOptions():
     def __init__(self):
         self.initialized = False
