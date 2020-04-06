@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
-from skimage.color import rgb2lab, lab2rgb
-from .rotate3d import ImageTransformer
+#from skimage.color import rgb2lab, lab2rgb
+#from .rotate3d import ImageTransformer
 
 '''
 alpha_for_graph: 对于生成图像latent code的步长alpha
@@ -84,58 +84,58 @@ class ColorTransform():
         # return np.array([0, 0.5])
         return np.linspace(0, 1, num_panels)
 
-class ColorLabTransform(ColorTransform):
+# class ColorLabTransform(ColorTransform):
 
-    def get_target_np(self, outputs_zs, alpha):
-        ''' return target image and mask '''
-        mask_out = np.ones(outputs_zs.shape)
-        if not np.any(alpha): # alpha is all zeros
-            return outputs_zs, mask_out
-        target_fn = np.copy(outputs_zs)
-        scaled_alpha = np.copy(alpha)
-        # we assume alpha in [-1,1]
-        # alpha_L in [-50,50], alpha_a in [-128,128], alpha_b in [-128, 128]
-        for b in range(alpha.shape[0]):
-            scaled_alpha[b,0] = alpha[b,0] * 50
-            scaled_alpha[b,1] = alpha[b,1] * 128
-            scaled_alpha[b,2] = alpha[b,2] * 128
+#     def get_target_np(self, outputs_zs, alpha):
+#         ''' return target image and mask '''
+#         mask_out = np.ones(outputs_zs.shape)
+#         if not np.any(alpha): # alpha is all zeros
+#             return outputs_zs, mask_out
+#         target_fn = np.copy(outputs_zs)
+#         scaled_alpha = np.copy(alpha)
+#         # we assume alpha in [-1,1]
+#         # alpha_L in [-50,50], alpha_a in [-128,128], alpha_b in [-128, 128]
+#         for b in range(alpha.shape[0]):
+#             scaled_alpha[b,0] = alpha[b,0] * 50
+#             scaled_alpha[b,1] = alpha[b,1] * 128
+#             scaled_alpha[b,2] = alpha[b,2] * 128
 
-        for b in range(alpha.shape[0]):
-            target_fn[b,:,:,:] = rgb2lab((target_fn[b,:,:,:]+1)/2)
-            for i in range(self.num_channels):
-                target_fn[b,:,:,i] = target_fn[b,:,:,i]+scaled_alpha[b,i]
-            target_fn[b,:,:,:] = lab2rgb(target_fn[b,:,:,:])*2 - 1
-        return target_fn, mask_out, np.count_nonzero(mask_out)
+#         for b in range(alpha.shape[0]):
+#             target_fn[b,:,:,:] = rgb2lab((target_fn[b,:,:,:]+1)/2)
+#             for i in range(self.num_channels):
+#                 target_fn[b,:,:,i] = target_fn[b,:,:,i]+scaled_alpha[b,i]
+#             target_fn[b,:,:,:] = lab2rgb(target_fn[b,:,:,:])*2 - 1
+#         return target_fn, mask_out, np.count_nonzero(mask_out)
 
-    def get_train_alpha(self, minibatch):
-        ''' get an alpha for training, return in format
-            alpha_val_for_graph, alpha_val_for get_target_np'''
-        batch_size = minibatch
-        if self.walk_type == 'linear':
-            if self.channel is None:
-                alpha_val = np.random.random(size=(batch_size, self.num_channels))-0.5
-            else:
-                alpha_val = np.zeros((batch_size, self.num_channels))
-                alpha_val[:, self.channel] = np.random.random(size=(batch_size,)) - 0.5
-            # graph and target use the same slider value
-            alpha_val_for_graph = alpha_val
-            alpha_val_for_target = alpha_val
-            return alpha_val_for_graph, alpha_val_for_target
-        elif self.walk_type == 'NNz':
-            alpha_val = np.random.randint(-self.N_f, self.N_f+1)
-            if self.channel is None:
-                # adjust luminance
-                alpha_val_for_target = np.zeros((batch_size, 3))
-                alpha_val_for_target[:, 0] = alpha_val * self.eps
-            else:
-                alpha_val_for_target = np.zeros((batch_size, 3))
-                alpha_val_for_target[:, self.channel] = alpha_val * self.eps
-            alpha_val_for_graph = alpha_val + self.N_f
-            return alpha_val_for_graph, alpha_val_for_target
+#     def get_train_alpha(self, minibatch):
+#         ''' get an alpha for training, return in format
+#             alpha_val_for_graph, alpha_val_for get_target_np'''
+#         batch_size = minibatch
+#         if self.walk_type == 'linear':
+#             if self.channel is None:
+#                 alpha_val = np.random.random(size=(batch_size, self.num_channels))-0.5
+#             else:
+#                 alpha_val = np.zeros((batch_size, self.num_channels))
+#                 alpha_val[:, self.channel] = np.random.random(size=(batch_size,)) - 0.5
+#             # graph and target use the same slider value
+#             alpha_val_for_graph = alpha_val
+#             alpha_val_for_target = alpha_val
+#             return alpha_val_for_graph, alpha_val_for_target
+#         elif self.walk_type == 'NNz':
+#             alpha_val = np.random.randint(-self.N_f, self.N_f+1)
+#             if self.channel is None:
+#                 # adjust luminance
+#                 alpha_val_for_target = np.zeros((batch_size, 3))
+#                 alpha_val_for_target[:, 0] = alpha_val * self.eps
+#             else:
+#                 alpha_val_for_target = np.zeros((batch_size, 3))
+#                 alpha_val_for_target[:, self.channel] = alpha_val * self.eps
+#             alpha_val_for_graph = alpha_val + self.N_f
+#             return alpha_val_for_graph, alpha_val_for_target
 
-    def vis_alphas(self, num_panels):
-        # alpha range for visualization
-        alphas = np.linspace(-1, 1, num_panels)
+#     def vis_alphas(self, num_panels):
+#         # alpha range for visualization
+#         alphas = np.linspace(-1, 1, num_panels)
 
 class ZoomTransform():
 
@@ -321,140 +321,140 @@ class ShiftYTransform(ShiftTransform):
         assert(np.setdiff1d(mask_out, [0., 1.]).size == 0)
         return target_fn, mask_out, np.count_nonzero(mask_out)
 
-class Rotate2DTransform():
+# class Rotate2DTransform():
 
-    def __init__(self):
-        self.alpha_max = 45
+#     def __init__(self):
+#         self.alpha_max = 45
 
-    def get_target_np(self, outputs_zs, alpha):
-        img_size = outputs_zs.shape[1]
-        mask_fn = np.ones(outputs_zs.shape)
+#     def get_target_np(self, outputs_zs, alpha):
+#         img_size = outputs_zs.shape[1]
+#         mask_fn = np.ones(outputs_zs.shape)
 
-        if alpha == 0:
-            return outputs_zs, mask_fn
+#         if alpha == 0:
+#             return outputs_zs, mask_fn
 
-        degree = alpha
+#         degree = alpha
 
-        M = cv2.getRotationMatrix2D((img_size//2, img_size//2), degree, 1)
-        target_fn = np.zeros(outputs_zs.shape)
-        mask_out = np.zeros(outputs_zs.shape)
-        for i in range(outputs_zs.shape[0]):
-            target_fn[i,:,:,:] = cv2.warpAffine(outputs_zs[i,:,:,:], M, (img_size, img_size))
-            mask_out[i,:,:,:] = cv2.warpAffine(mask_fn[i,:,:,:], M, (img_size, img_size))
+#         M = cv2.getRotationMatrix2D((img_size//2, img_size//2), degree, 1)
+#         target_fn = np.zeros(outputs_zs.shape)
+#         mask_out = np.zeros(outputs_zs.shape)
+#         for i in range(outputs_zs.shape[0]):
+#             target_fn[i,:,:,:] = cv2.warpAffine(outputs_zs[i,:,:,:], M, (img_size, img_size))
+#             mask_out[i,:,:,:] = cv2.warpAffine(mask_fn[i,:,:,:], M, (img_size, img_size))
 
-        mask_out[np.nonzero(mask_out)] = 1.
-        assert(np.setdiff1d(mask_out, [0., 1.]).size == 0)
+#         mask_out[np.nonzero(mask_out)] = 1.
+#         assert(np.setdiff1d(mask_out, [0., 1.]).size == 0)
 
-        return target_fn, mask_out, np.count_nonzero(mask_out)
-
-
-    def get_train_alpha(self, minibatch):
-        ''' get an alpha for training, return in format
-            alpha_val_for_graph, alpha_val_for_get_target_np'''
-        if self.walk_type == 'linear':
-            alpha_val = np.random.randint(1, self.alpha_max) # changed to increase this range
-            coin = np.random.uniform(0, 1)
-            if coin <= 0.5:
-                alpha_val = -alpha_val
-            alpha_scaled = alpha_val / self.alpha_max
-            batch_size = minibatch
-            slider = np.ones((batch_size, self.Nsliders)) * alpha_scaled
-            return slider, alpha_val
-        elif self.walk_type == 'NNz':
-            alpha_val = np.random.randint(-self.N_f, self.N_f + 1)
-            return alpha_val + self.N_f, alpha_val * self.eps
-
-    def scale_test_alpha_for_graph(self, alpha, zs_batch, **kwargs):
-        ''' map a scalar alpha to the appropriate shape,
-            and do the desired transformation '''
-        if self.walk_type == 'linear':
-            alpha_scaled = alpha / self.alpha_max
-            batch_size = zs_batch.shape[0]
-            slider = alpha_scaled * np.ones((batch_size, self.Nsliders))
-            return slider
-        elif self.walk_type == 'NNz':
-            # N_f = self.N_f
-            # return one_hot_if_needed(alpha // self.eps + N_f, N_f * 2 + 1)
-            return int(np.round(alpha / self.eps))
-
-    def test_alphas(self):
-        return np.linspace(-90, 90, 9)
-
-    def vis_alphas(self, num_panels):
-        # alpha range for visualization
-        if self.walk_type == 'linear':
-            alphas = np.linspace(-90, 90, num_panels)
-        elif self.walk_type == 'NNz':
-            # can expand range here beyond N_f * eps
-            alphas = np.arange(-self.N_f * self.eps, self.N_f * self.eps + 1, self.eps)
-        return alphas
-
-class Rotate3DTransform():
-
-    def __init__(self):
-        self.alpha_max = 45
-
-    def get_target_np(self, outputs_zs, alpha):
-        mask_fn = np.ones(outputs_zs.shape)
-
-        if alpha == 0:
-            return outputs_zs, mask_fn
-
-        target_fn = np.zeros(outputs_zs.shape)
-        mask_out = np.zeros(outputs_zs.shape)
-        for i in range(outputs_zs.shape[0]):
-            it = ImageTransformer(outputs_zs[i,:,:,:], shape=None)
-            target_fn[i,:,:,:] = it.rotate_along_axis(phi = alpha, dx = 0)
-            it = ImageTransformer(mask_fn[i,:,:,:], shape=None)
-            mask_out[i,:,:,:] = it.rotate_along_axis(phi = alpha, dx = 0)
-
-        mask_out[np.nonzero(mask_out)] = 1.
-        assert(np.setdiff1d(mask_out, [0., 1.]).size == 0)
-        return target_fn, mask_out, np.count_nonzero(mask_out)
+#         return target_fn, mask_out, np.count_nonzero(mask_out)
 
 
-    def get_train_alpha(self, minibatch):
-        ''' get an alpha for training, return in format
-            alpha_val_for_graph, alpha_val_for_get_target_np'''
-        if self.walk_type == 'linear':
-            alpha_val = np.random.randint(1, self.alpha_max)
-            coin = np.random.uniform(0, 1)
-            if coin <= 0.5:
-                alpha_val = -alpha_val
-            alpha_scaled = alpha_val / self.alpha_max
-            batch_size = minibatch
-            slider = np.ones((batch_size, self.Nsliders)) * alpha_scaled
-            return slider, alpha_val
-        elif self.walk_type == 'NNz':
-            alpha_val = np.random.randint(-self.N_f, self.N_f + 1)
-            return alpha_val + self.N_f, alpha_val * self.eps
+#     def get_train_alpha(self, minibatch):
+#         ''' get an alpha for training, return in format
+#             alpha_val_for_graph, alpha_val_for_get_target_np'''
+#         if self.walk_type == 'linear':
+#             alpha_val = np.random.randint(1, self.alpha_max) # changed to increase this range
+#             coin = np.random.uniform(0, 1)
+#             if coin <= 0.5:
+#                 alpha_val = -alpha_val
+#             alpha_scaled = alpha_val / self.alpha_max
+#             batch_size = minibatch
+#             slider = np.ones((batch_size, self.Nsliders)) * alpha_scaled
+#             return slider, alpha_val
+#         elif self.walk_type == 'NNz':
+#             alpha_val = np.random.randint(-self.N_f, self.N_f + 1)
+#             return alpha_val + self.N_f, alpha_val * self.eps
 
-    def scale_test_alpha_for_graph(self, alpha, zs_batch, **kwargs):
-        ''' map a scalar alpha to the appropriate shape,
-            and do the desired transformation '''
-        if self.walk_type == 'linear':
-            alpha_scaled = alpha / self.alpha_max
-            batch_size = zs_batch.shape[0]
-            slider = alpha_scaled * np.ones((batch_size, self.Nsliders))
-            return slider
-        elif self.walk_type == 'NNz':
-            # N_f = self.N_f
-            # return one_hot_if_needed(alpha // self.eps + N_f, N_f * 2 + 1)
-            return int(np.round(alpha / self.eps))
+#     def scale_test_alpha_for_graph(self, alpha, zs_batch, **kwargs):
+#         ''' map a scalar alpha to the appropriate shape,
+#             and do the desired transformation '''
+#         if self.walk_type == 'linear':
+#             alpha_scaled = alpha / self.alpha_max
+#             batch_size = zs_batch.shape[0]
+#             slider = alpha_scaled * np.ones((batch_size, self.Nsliders))
+#             return slider
+#         elif self.walk_type == 'NNz':
+#             # N_f = self.N_f
+#             # return one_hot_if_needed(alpha // self.eps + N_f, N_f * 2 + 1)
+#             return int(np.round(alpha / self.eps))
 
-    def test_alphas(self):
-        # rot3d needs a large range to have an effect
-        return np.linspace(-720, 720, 9)
+#     def test_alphas(self):
+#         return np.linspace(-90, 90, 9)
 
-    def vis_alphas(self, num_panels):
-        # 3d rotate needs a large range to have an effect
-        if self.walk_type == 'linear':
-            alphas = np.linspace(-720, 720, num_panels)
-        elif self.walk_type == 'NNz':
-            # can expand range here beyond N_f * eps
-            # alphas = np.arange(-self.N_f * self.eps, self.N_f * self.eps + 1, self.eps)
-            alphas = np.linspace(-270, 270, num_panels)
-        return alphas
+#     def vis_alphas(self, num_panels):
+#         # alpha range for visualization
+#         if self.walk_type == 'linear':
+#             alphas = np.linspace(-90, 90, num_panels)
+#         elif self.walk_type == 'NNz':
+#             # can expand range here beyond N_f * eps
+#             alphas = np.arange(-self.N_f * self.eps, self.N_f * self.eps + 1, self.eps)
+#         return alphas
+
+# class Rotate3DTransform():
+
+#     def __init__(self):
+#         self.alpha_max = 45
+
+#     def get_target_np(self, outputs_zs, alpha):
+#         mask_fn = np.ones(outputs_zs.shape)
+
+#         if alpha == 0:
+#             return outputs_zs, mask_fn
+
+#         target_fn = np.zeros(outputs_zs.shape)
+#         mask_out = np.zeros(outputs_zs.shape)
+#         for i in range(outputs_zs.shape[0]):
+#             it = ImageTransformer(outputs_zs[i,:,:,:], shape=None)
+#             target_fn[i,:,:,:] = it.rotate_along_axis(phi = alpha, dx = 0)
+#             it = ImageTransformer(mask_fn[i,:,:,:], shape=None)
+#             mask_out[i,:,:,:] = it.rotate_along_axis(phi = alpha, dx = 0)
+
+#         mask_out[np.nonzero(mask_out)] = 1.
+#         assert(np.setdiff1d(mask_out, [0., 1.]).size == 0)
+#         return target_fn, mask_out, np.count_nonzero(mask_out)
+
+
+#     def get_train_alpha(self, minibatch):
+#         ''' get an alpha for training, return in format
+#             alpha_val_for_graph, alpha_val_for_get_target_np'''
+#         if self.walk_type == 'linear':
+#             alpha_val = np.random.randint(1, self.alpha_max)
+#             coin = np.random.uniform(0, 1)
+#             if coin <= 0.5:
+#                 alpha_val = -alpha_val
+#             alpha_scaled = alpha_val / self.alpha_max
+#             batch_size = minibatch
+#             slider = np.ones((batch_size, self.Nsliders)) * alpha_scaled
+#             return slider, alpha_val
+#         elif self.walk_type == 'NNz':
+#             alpha_val = np.random.randint(-self.N_f, self.N_f + 1)
+#             return alpha_val + self.N_f, alpha_val * self.eps
+
+#     def scale_test_alpha_for_graph(self, alpha, zs_batch, **kwargs):
+#         ''' map a scalar alpha to the appropriate shape,
+#             and do the desired transformation '''
+#         if self.walk_type == 'linear':
+#             alpha_scaled = alpha / self.alpha_max
+#             batch_size = zs_batch.shape[0]
+#             slider = alpha_scaled * np.ones((batch_size, self.Nsliders))
+#             return slider
+#         elif self.walk_type == 'NNz':
+#             # N_f = self.N_f
+#             # return one_hot_if_needed(alpha // self.eps + N_f, N_f * 2 + 1)
+#             return int(np.round(alpha / self.eps))
+
+#     def test_alphas(self):
+#         # rot3d needs a large range to have an effect
+#         return np.linspace(-720, 720, 9)
+
+#     def vis_alphas(self, num_panels):
+#         # 3d rotate needs a large range to have an effect
+#         if self.walk_type == 'linear':
+#             alphas = np.linspace(-720, 720, num_panels)
+#         elif self.walk_type == 'NNz':
+#             # can expand range here beyond N_f * eps
+#             # alphas = np.arange(-self.N_f * self.eps, self.N_f * self.eps + 1, self.eps)
+#             alphas = np.linspace(-270, 270, num_panels)
+#         return alphas
 
 def lerp(A, B, num_interps):
     alphas = np.linspace(-1.5, 2.5, num_interps)
