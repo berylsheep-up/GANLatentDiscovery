@@ -28,7 +28,7 @@ class Params(object):
         self.global_deformation = False
         self.deformation_loss = DeformatorLoss.NONE
         self.shift_scale = 6.0
-        self.min_shift = 0.5
+        self.min_shift = 0.25
         self.shift_distribution = ShiftDistribution.UNIFORM
 
         self.deformator_lr = 0.0001
@@ -39,6 +39,7 @@ class Params(object):
 
         self.label_weight = 2.0
         self.shift_weight = 0.5
+        self.transform_weight = 1
 
         self.deformation_loss_weight = 2.0
         self.z_norm_loss_low_bound = 1.1
@@ -76,17 +77,21 @@ class Trainer(object):
         self.out_json = out_json if out_json is not None else os.path.join(out_dir, 'stat.json')
         self.fixed_test_noise = None
 
-    def make_shifts(self, latent_dim):
+    def make_shifts(self, latent_dim, shift=None):
         '''
         Returns:
             target_indices: one hot's index
+            shifts: z_shift one hot处的值，即偏移量
             z_shift: one hot 向量
-            shift: z_shift one hot处的值，即偏移量
         '''
         target_indices = torch.randint(0, self.p.max_latent_ind, [self.p.batch_size], device='cuda')
-        if self.p.shift_distribution == ShiftDistribution.NORMAL:
+        if shift is not None:
+            shifts = shift
+        elif self.p.shift_distribution == ShiftDistribution.NORMAL:
+            # 返回一个张量，包含了从标准正态分布（均值为0，方差为1，即高斯白噪声）中抽取的一组随机数。
             shifts =  torch.randn(target_indices.shape, device='cuda')
         elif self.p.shift_distribution == ShiftDistribution.UNIFORM:
+            # 返回一个张量，包含了从区间[0, 1)的均匀分布中抽取的一组随机数。张量的形状由参数sizes定义。
             shifts = 2.0 * torch.rand(target_indices.shape, device='cuda') - 1.0
 
         shifts = self.p.shift_scale * shifts
@@ -177,7 +182,18 @@ class Trainer(object):
         if step % self.p.steps_per_save == 0 and step > 0:
             self.save_models(deformator, shift_predictor, step)
 
-    def train(self, G, deformator, shift_predictor):
+    def cal_transform_loss(transform_model, criterion, out_img, color_channel = -1):
+        if color_channel != -1:
+            target_img, mask_out, numel_mask = transform_model.get_target_np(out_img.cpu().numpy(), transform_model.alpha_for_target, color_channel)
+        else:
+            target_img, mask_out, numel_mask = transform_model.get_target_np(out_img.cpu().numpy(), transform_model.alpha_for_target)
+        target_tensor = torch.tensor(target_fn, device='cuda', dtype=torch.float32)
+        mask_tensor = torch.tensor(mask_out, device='cuda', dtype=torch.float32)
+        numel_mask_tensor = torch.tensor(numel_mask, device='cuda', dtype=torch.float32)
+        loss = criterion(out_img * mask_tensor, target_tensor * mask_tensor) / numel_mask_tensor
+        return loss
+
+    def train(self, G, deformator, shift_predictor, transform_model):
         G.cuda().eval()
         deformator.cuda().train()
         shift_predictor.cuda().train()
@@ -188,8 +204,8 @@ class Trainer(object):
             shift_predictor.parameters(), lr=self.p.shift_predictor_lr)
 
         avgs = MeanTracker('percent'), MeanTracker('loss'), MeanTracker('direction_loss'),\
-               MeanTracker('shift_loss'), MeanTracker('deformator_loss')
-        avg_correct_percent, avg_loss, avg_label_loss, avg_shift_loss, avg_deformator_loss = avgs
+               MeanTracker('shift_loss'), MeanTracker('deformator_loss'), MeanTracker('transform_loss')
+        avg_correct_percent, avg_loss, avg_label_loss, avg_shift_loss, avg_deformator_loss, avg_transform_loss = avgs
 
         recovered_step = self.start_from_checkpoint(deformator, shift_predictor)
         for step in range(recovered_step, self.p.n_steps, 1):
@@ -201,6 +217,32 @@ class Trainer(object):
             z_orig = torch.clone(z)
             target_indices, shifts, z_shift = self.make_shifts(G.dim_z)
 
+            for t_model in transform_model:
+                alpha_for_graph, alpha_for_target = t_model.model.get_train_alpha(minibatch = 1)
+                transform_model.t_model.alpha_for_graph = alpha_for_graph
+                transform_model.t_model.alpha_for_target = alpha_for_target
+
+            # alpha替换shift
+            for index, target_indice in enumerate(target_indices):
+                if target_indice == 0:
+                    shifts[index] = transform_model.color.alpha_for_graph[0][0]
+                    z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][0]
+                elif target_indice == 1:
+                    shifts[index] = transform_model.color.alpha_for_graph[0][1]
+                    z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][1]
+                elif target_indice == 2:
+                    shifts[index] = transform_model.color.alpha_for_graph[0][2]
+                    z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][2]
+                elif target_indice == 3:
+                    shifts[index] = transform_model.zoom.alpha_for_graph[0]
+                    z_shift[index][target_indice] = transform_model.zoom.alpha_for_target[0]
+                elif target_indice == 4:
+                    shifts[index] = transform_model.shiftx.alpha_for_graph[0]
+                    z_shift[index][target_indice] = transform_model.shiftx.alpha_for_target[0]
+                elif target_indice == 5:
+                    shifts[index] = transform_model.shifty.alpha_for_graph[0]
+                    z_shift[index][target_indice] = transform_model.shifty.alpha_for_target[0]
+
             # Deformation
 
             if self.p.global_deformation:
@@ -211,10 +253,23 @@ class Trainer(object):
             imgs = G(z)
             imgs_shifted = G(z_shifted)
 
+            criterion = nn.MSELoss(reduction='sum')
+            transform_loss = 0
+            for index, target_indice in enumerate(target_indices):
+                if target_indice < 3:
+                    transform_loss += self.cal_transform_loss(transform_model.color, criterion, imgs[index], color_channel=target_indice)
+                elif target_indice == 3:
+                    transform_loss += self.cal_transform_loss(transform_model.zoom, criterion, imgs[index])
+                elif target_indice == 4:
+                    transform_loss += self.cal_transform_loss(transform_model.shiftx, criterion, imgs[index])
+                elif target_indice == 5:
+                    transform_loss += self.cal_transform_loss(transform_model.shifty, criterion, imgs[index])
+            transform_loss = self.p.transform_weight * transform_loss
+
+
             logits, shift_prediction = shift_predictor(imgs, imgs_shifted)
             logit_loss = self.p.label_weight * self.cross_entropy(logits, target_indices)
             shift_loss = self.p.shift_weight * torch.mean(torch.abs(shift_prediction - shifts))
-
             # Loss
 
             # deformator penalty
@@ -236,7 +291,7 @@ class Trainer(object):
                 z_loss = torch.tensor([0.0], device='cuda')
 
             # total loss
-            loss = logit_loss + shift_loss + z_loss
+            loss = logit_loss + shift_loss + z_loss + transform_loss
             loss.backward()
 
             if deformator_opt is not None:
@@ -250,6 +305,7 @@ class Trainer(object):
             avg_label_loss.add(logit_loss.item())
             avg_shift_loss.add(shift_loss)
             avg_deformator_loss.add(z_loss.item())
+            avg_transform_loss.add(transform_loss.item())
 
             self.log(G, deformator, shift_predictor, step, avgs)
 
