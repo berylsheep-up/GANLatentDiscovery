@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from tensorboardX import SummaryWriter
 
-from utils import make_noise
+from utils.util import make_noise
 from train_log import MeanTracker
 from visualization import make_interpolation_chart, fig_to_image
 from latent_deformator import DeformatorType, normal_projection_stat
