@@ -98,7 +98,7 @@ def main():
 
         shift_predictor.load_state_dict(torch.load(args.shift_predictor_path, map_location=torch.device('cpu')))
     else:
-        deformator = LatentDeformator(G,dim_z, 
+        deformator = LatentDeformator(G.dim_z, 
             type=DEFORMATOR_TYPE_DICT[args.deformator], 
             random_init=args.deformator_random_init).cuda()
 
