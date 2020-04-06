@@ -7,7 +7,7 @@ import io
 
 from torch_tools.visualization import to_image
 
-from utils import make_noise, one_hot
+from utils.util import make_noise, one_hot
 
 
 def fig_to_image(fig):
