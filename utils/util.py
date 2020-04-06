@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from typing import Any
 
 class EasyDict(dict):
     """便利类，其行为类似于dict，但允许使用属性语法进行访问。"""
