@@ -13,10 +13,10 @@ def get_transform_graphs(model):
 
     class ColorGraph(base.PixelTransform,op.ColorTransform):
         def __init__(self, lr=0.001, walk_type='NNz', loss='l2', eps=0.1,
-                     N_f=5, channel=None, **kwargs):
+                     N_f=5, channel=None, img_size=512, **kwargs):
             # NN walk only changes a single op (luminance)
             nsliders = 3 if walk_type == 'linear' else 1
-            base.PixelTransform.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
+            base.PixelTransform.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
             op.ColorTransform.__init__(self, channel)
 
         def vis_image_batch(self, graph_inputs, filename, batch_start,
@@ -66,58 +66,58 @@ def get_transform_graphs(model):
             return stat
 
 
-    #class ColorLabGraph(base.PixelTransform, op.ColorLabTransform):
+    # class ColorLabGraph(base.PixelTransform, op.ColorLabTransform):
 
-        def __init__(self, lr=0.001, walk_type='NNz', loss='l2', eps=0.1,
-                     N_f=5, channel=None, **kwargs):
-            # NN walk only changes a single op (luminance)
-            nsliders = 3 if walk_type == 'linear' else 1
-            base.PixelTransform.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
-            op.ColorLabTransform.__init__(self, channel)
+    #     def __init__(self, lr=0.001, walk_type='NNz', loss='l2', eps=0.1,
+    #                  N_f=5, channel=None, img_size=512, **kwargs):
+    #         # NN walk only changes a single op (luminance)
+    #         nsliders = 3 if walk_type == 'linear' else 1
+    #         base.PixelTransform.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
+    #         op.ColorLabTransform.__init__(self, channel)
 
-        def vis_image_batch(self, graph_inputs, filename, batch_start,
-                            wgt=False, wmask=False, num_panels=7,
-                            max_alpha=None, min_alpha=None):
-            if max_alpha is not None and min_alpha is not None:
-                alphas = np.linspace(min_alpha, max_alpha, num_panels)
-            else:
-                alphas = self.vis_alphas(num_panels)
+    #     def vis_image_batch(self, graph_inputs, filename, batch_start,
+    #                         wgt=False, wmask=False, num_panels=7,
+    #                         max_alpha=None, min_alpha=None):
+    #         if max_alpha is not None and min_alpha is not None:
+    #             alphas = np.linspace(min_alpha, max_alpha, num_panels)
+    #         else:
+    #             alphas = self.vis_alphas(num_panels)
 
-            zs_batch = graph_inputs[self.z]
+    #         zs_batch = graph_inputs[self.z]
 
-            filename_base = filename
-            for channel, color in enumerate('Lab'):
-                # NN walk only handles a single op
-                if self.walk_type.startswith('NN') and self.channel is None and color in 'ab' \
-                        or (self.walk_type.startswith('NN') and self.channel is not None
-                            and self.channel != channel):
-                    continue
-                alphas_to_graph = []
-                alphas_to_target = []
-                for a in alphas:
-                    a_graph = self.scale_test_alpha_for_graph(
-                        a, zs_batch, channel)
-                    alphas_to_graph.append(a_graph)
-                    a_target = np.zeros((zs_batch.shape[0], 3))
-                    a_target[:, 0] = a
-                    alphas_to_target.append(a_target)
-                filename = filename_base + '_{}'.format(color)
-                self.vis_image_batch_alphas(graph_inputs, filename,
-                                            alphas_to_graph, alphas_to_target,
-                                            batch_start, wgt=False, wmask=False)
+    #         filename_base = filename
+    #         for channel, color in enumerate('Lab'):
+    #             # NN walk only handles a single op
+    #             if self.walk_type.startswith('NN') and self.channel is None and color in 'ab' \
+    #                     or (self.walk_type.startswith('NN') and self.channel is not None
+    #                         and self.channel != channel):
+    #                 continue
+    #             alphas_to_graph = []
+    #             alphas_to_target = []
+    #             for a in alphas:
+    #                 a_graph = self.scale_test_alpha_for_graph(
+    #                     a, zs_batch, channel)
+    #                 alphas_to_graph.append(a_graph)
+    #                 a_target = np.zeros((zs_batch.shape[0], 3))
+    #                 a_target[:, 0] = a
+    #                 alphas_to_target.append(a_target)
+    #             filename = filename_base + '_{}'.format(color)
+    #             self.vis_image_batch_alphas(graph_inputs, filename,
+    #                                         alphas_to_graph, alphas_to_target,
+    #                                         batch_start, wgt=False, wmask=False)
 
-        def get_distribution_statistic(self, img, channel=None):
-            if channel is None:
-                channel = 0 # luminance
-            num_pixels = 100
-            stat = img[np.random.choice(self.img_size, num_pixels),
-                       np.random.choice(self.img_size, num_pixels), channel]
-            return stat
+    #     def get_distribution_statistic(self, img, channel=None):
+    #         if channel is None:
+    #             channel = 0 # luminance
+    #         num_pixels = 100
+    #         stat = img[np.random.choice(self.img_size, num_pixels),
+    #                    np.random.choice(self.img_size, num_pixels), channel]
+    #         return stat
 
     class ZoomGraph(base.BboxTransform,op.ZoomTransform):
-        def __init__(self, lr=0.001, walk_type='NNz', loss='l2', eps=1.41, N_f=4, **kwargs):
+        def __init__(self, lr=0.001, walk_type='NNz', loss='l2', eps=1.41, N_f=4, img_size=512, **kwargs):
             nsliders = 1
-            base.BboxTransform.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
+            base.BboxTransform.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
             op.ZoomTransform.__init__(self)
 
         def vis_image_batch(self, graph_inputs, filename,
@@ -154,10 +154,10 @@ def get_transform_graphs(model):
             return []
 
     class ShiftXGraph(base.BboxTransform, op.ShiftXTransform):
-        def __init__(self, lr=0.0001, walk_type='NNz', loss='l2', eps=5, N_f=10, **kwargs):
+        def __init__(self, lr=0.0001, walk_type='NNz', loss='l2', eps=5, N_f=10, img_size=512, **kwargs):
             nsliders = 1
             eps = int(eps)
-            base.BboxTransform.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
+            base.BboxTransform.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
             op.ShiftXTransform.__init__(self)
 
 
@@ -188,10 +188,10 @@ def get_transform_graphs(model):
             return []
 
     class ShiftYGraph(base.BboxTransform, op.ShiftYTransform):
-        def __init__(self, lr=0.0001, walk_type='NNz', loss='l2', eps=5, N_f=10, **kwargs):
+        def __init__(self, lr=0.0001, walk_type='NNz', loss='l2', eps=5, N_f=10, img_size=512, **kwargs):
             nsliders = 1
             eps = int(eps)
-            base.BboxTransform.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
+            base.BboxTransform.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
             op.ShiftYTransform.__init__(self)
 
         def vis_image_batch(self, graph_inputs,  filename,
@@ -221,9 +221,9 @@ def get_transform_graphs(model):
             return []
 
     #class Rotate2DGraph(base.TransformGraph,op.Rotate2DTransform):
-        def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, **kwargs):
+        def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, img_size=512, **kwargs):
             nsliders = 1
-            base.TransformGraph.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
+            base.TransformGraph.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
             op.Rotate2DTransform.__init__(self)
 
         def vis_image_batch(self, graph_inputs, filename,
@@ -246,9 +246,9 @@ def get_transform_graphs(model):
                                         batch_start, wgt=False, wmask=False)
 
     #class Rotate3DGraph(base.TransformGraph,op.Rotate3DTransform):
-        def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, **kwargs):
+        def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, img_size=512, **kwargs):
             nsliders = 1
-            base.TransformGraph.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
+            base.TransformGraph.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
             op.Rotate3DTransform.__init__(self)
 
         def vis_image_batch(self, graph_inputs, filename,

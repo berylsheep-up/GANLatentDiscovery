@@ -4,6 +4,7 @@ from enum import Enum
 import torch
 from torch import nn
 from tensorboardX import SummaryWriter
+import numpy as np
 
 from utils.util import make_noise
 from train_log import MeanTracker
@@ -35,7 +36,7 @@ class Params(object):
         self.shift_predictor_lr = 0.0001
         self.n_steps = 5*int(1e+5)
         self.batch_size = 6
-        self.max_latent_ind = 120
+        self.max_latent_ind = 10 #120
 
         self.label_weight = 2.0
         self.shift_weight = 0.5
@@ -58,12 +59,13 @@ class Params(object):
 
 class Trainer(object):
     def __init__(self, params=Params(), out_dir='', out_json=None,
-                 verbose=False):
+                 verbose=False, continue_train=False):
         if verbose:
             print('Trainer inited with:\n{}'.format(str(params.__dict__)))
         self.p = params
         self.log_dir = out_dir
         self.cross_entropy = nn.CrossEntropyLoss()
+        self.continue_train = continue_train
 
         tb_dir = os.path.join(out_dir, 'tensorboard')
         self.models_dir = os.path.join(out_dir, 'models')
@@ -134,7 +136,7 @@ class Trainer(object):
 
     def start_from_checkpoint(self, deformator, shift_predictor):
         step = 0
-        if os.path.isfile(self.checkpoint):
+        if os.path.isfile(self.checkpoint) and self.continue_train== True:
             state_dict = torch.load(self.checkpoint)
             step = state_dict['step']
             deformator.load_state_dict(state_dict['deformator'])
@@ -182,13 +184,15 @@ class Trainer(object):
         if step % self.p.steps_per_save == 0 and step > 0:
             self.save_models(deformator, shift_predictor, step)
 
-    def cal_transform_loss(transform_model, criterion, out_img, color_channel = -1):
+    def cal_transform_loss(self, transform_model, criterion, out_img, color_channel=-1):
+        img = out_img.cpu().detach().numpy()
+        img = img[np.newaxis, :].transpose((0,2,3,1))
         if color_channel != -1:
-            target_img, mask_out, numel_mask = transform_model.get_target_np(out_img.cpu().numpy(), transform_model.alpha_for_target, color_channel)
+            target_img, mask_out, numel_mask = transform_model.model.get_target_np(img, transform_model.alpha_for_target, color_channel)
         else:
-            target_img, mask_out, numel_mask = transform_model.get_target_np(out_img.cpu().numpy(), transform_model.alpha_for_target)
-        target_tensor = torch.tensor(target_fn, device='cuda', dtype=torch.float32)
-        mask_tensor = torch.tensor(mask_out, device='cuda', dtype=torch.float32)
+            target_img, mask_out, numel_mask = transform_model.model.get_target_np(img, transform_model.alpha_for_target)
+        target_tensor = torch.tensor(target_img.transpose((0,3,1,2)), device='cuda', dtype=torch.float32)
+        mask_tensor = torch.tensor(mask_out.transpose((0,3,1,2)), device='cuda', dtype=torch.float32)
         numel_mask_tensor = torch.tensor(numel_mask, device='cuda', dtype=torch.float32)
         loss = criterion(out_img * mask_tensor, target_tensor * mask_tensor) / numel_mask_tensor
         return loss
@@ -218,30 +222,29 @@ class Trainer(object):
             target_indices, shifts, z_shift = self.make_shifts(G.dim_z)
 
             for t_model in transform_model:
-                alpha_for_graph, alpha_for_target = t_model.model.get_train_alpha(minibatch = 1)
-                transform_model.t_model.alpha_for_graph = alpha_for_graph
-                transform_model.t_model.alpha_for_target = alpha_for_target
-
+                alpha_for_graph, alpha_for_target = transform_model[t_model].model.get_train_alpha(minibatch = 1)
+                transform_model[t_model].alpha_for_graph = alpha_for_graph
+                transform_model[t_model].alpha_for_target = alpha_for_target
             # alpha替换shift
             for index, target_indice in enumerate(target_indices):
                 if target_indice == 0:
-                    shifts[index] = transform_model.color.alpha_for_graph[0][0]
+                    shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][0])
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][0]
                 elif target_indice == 1:
-                    shifts[index] = transform_model.color.alpha_for_graph[0][1]
+                    shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][1])
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][1]
                 elif target_indice == 2:
-                    shifts[index] = transform_model.color.alpha_for_graph[0][2]
+                    shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][2])
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][2]
                 elif target_indice == 3:
-                    shifts[index] = transform_model.zoom.alpha_for_graph[0]
-                    z_shift[index][target_indice] = transform_model.zoom.alpha_for_target[0]
+                    shifts[index] = torch.from_numpy(transform_model.zoom.alpha_for_graph[0])
+                    z_shift[index][target_indice] = transform_model.zoom.alpha_for_target
                 elif target_indice == 4:
-                    shifts[index] = transform_model.shiftx.alpha_for_graph[0]
-                    z_shift[index][target_indice] = transform_model.shiftx.alpha_for_target[0]
+                    shifts[index] = torch.from_numpy(transform_model.shiftx.alpha_for_graph[0])
+                    z_shift[index][target_indice] = transform_model.shiftx.alpha_for_target
                 elif target_indice == 5:
-                    shifts[index] = transform_model.shifty.alpha_for_graph[0]
-                    z_shift[index][target_indice] = transform_model.shifty.alpha_for_target[0]
+                    shifts[index] = torch.from_numpy(transform_model.shifty.alpha_for_graph[0])
+                    z_shift[index][target_indice] = transform_model.shifty.alpha_for_target
 
             # Deformation
 
@@ -256,13 +259,15 @@ class Trainer(object):
             criterion = nn.MSELoss(reduction='sum')
             transform_loss = 0
             for index, target_indice in enumerate(target_indices):
-                if target_indice < 3:
-                    transform_loss += self.cal_transform_loss(transform_model.color, criterion, imgs[index], color_channel=target_indice)
-                elif target_indice == 3:
-                    transform_loss += self.cal_transform_loss(transform_model.zoom, criterion, imgs[index])
-                elif target_indice == 4:
+                target_number = target_indice.item()
+                if target_number < 3:
+                    transform_loss += self.cal_transform_loss(transform_model.color, criterion, imgs[index], color_channel=target_number)
+                elif target_number == 3:
+                    transform_loss += self.cal_transform_loss(
+                        transform_model=transform_model.zoom, criterion=criterion, out_img=imgs[index])
+                elif target_number == 4:
                     transform_loss += self.cal_transform_loss(transform_model.shiftx, criterion, imgs[index])
-                elif target_indice == 5:
+                elif target_number == 5:
                     transform_loss += self.cal_transform_loss(transform_model.shifty, criterion, imgs[index])
             transform_loss = self.p.transform_weight * transform_loss
 
