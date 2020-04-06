@@ -66,7 +66,7 @@ def get_transform_graphs(model):
             return stat
 
 
-    class ColorLabGraph(base.PixelTransform, op.ColorLabTransform):
+    #class ColorLabGraph(base.PixelTransform, op.ColorLabTransform):
 
         def __init__(self, lr=0.001, walk_type='NNz', loss='l2', eps=0.1,
                      N_f=5, channel=None, **kwargs):
@@ -220,7 +220,7 @@ def get_transform_graphs(model):
                 return [center_y] # want to return as a list
             return []
 
-    class Rotate2DGraph(base.TransformGraph,op.Rotate2DTransform):
+    #class Rotate2DGraph(base.TransformGraph,op.Rotate2DTransform):
         def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, **kwargs):
             nsliders = 1
             base.TransformGraph.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
@@ -245,7 +245,7 @@ def get_transform_graphs(model):
                                         alphas_to_graph, alphas_to_target,
                                         batch_start, wgt=False, wmask=False)
 
-    class Rotate3DGraph(base.TransformGraph,op.Rotate3DTransform):
+    #class Rotate3DGraph(base.TransformGraph,op.Rotate3DTransform):
         def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, **kwargs):
             nsliders = 1
             base.TransformGraph.__init__(self, lr, walk_type, nsliders, loss, eps, N_f, **kwargs)
@@ -271,7 +271,8 @@ def get_transform_graphs(model):
                                         batch_start, wgt=False, wmask=False)
 
 
-    graphs = [ColorGraph, ColorLabGraph, ZoomGraph, ShiftXGraph, ShiftYGraph,
-              Rotate2DGraph, Rotate3DGraph]
+    # graphs = [ColorGraph, ColorLabGraph, ZoomGraph, ShiftXGraph, ShiftYGraph,
+    #           Rotate2DGraph, Rotate3DGraph]
+    graphs = [ColorGraph, ColorLabGraph, ZoomGraph, ShiftXGraph, ShiftYGraph]
 
     return graphs
