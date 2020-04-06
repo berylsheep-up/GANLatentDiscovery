@@ -25,7 +25,7 @@ def main():
 
     parser.add_argument('--deformator', type=str, default='ortho',
                         choices=DEFORMATOR_TYPE_DICT.keys())
-    parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
+    parser.add_argument('--deformator_path', type=str, default='output/models/deformator_490000.pt')
     parser.add_argument('--images_dir', type=str, default='output/images/')
 
     parser.add_argument('--shift_predictor_size', type=int)
@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--shift_distribution_key', type=str,
                         choices=SHIFT_DISTRIDUTION_DICT.keys())
 
-    parser.add_argument('--seed', type=int, default=10)
+    parser.add_argument('--seed', type=int, default=5)
     parser.add_argument('--device', type=int, default=0)
 
     args = parser.parse_args()
@@ -64,8 +64,9 @@ def main():
 
     random.seed(args.seed)
     torch.random.manual_seed(args.seed)
-    z = make_noise(batch = 5,dim = 512)
-    dims = [1]
+
+    z = make_noise(batch = 5,dim = G.dim_z).cuda()
+    dims=[2, 9]
 
     fig = make_interpolation_chart(G, deformator=deformator, z = z,
                              shifts_r=10, shifts_count=3,

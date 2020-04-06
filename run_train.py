@@ -21,36 +21,37 @@ from utils.util import EasyDict
 
 
 def main():
-    targsion = TrainOptions()
+    tOption = TrainOptions()
     
     for key, val in Params().__dict__.items():
-        targsion.parser.add_argument('--{}'.format(key), type=type(val), default=None)
+        tOption.parser.add_argument('--{}'.format(key), type=type(val), default=None)
 
-    targsion.parser.add_argument('--args', type=str, default=None, help='json with all arguments')
-    targsion.parser.add_argument('--out', type=str, default='./output')
-    targsion.parser.add_argument('--gan_type', type=str, choices=WEIGHTS.keys(), default='StyleGAN')
-    targsion.parser.add_argument('--gan_weights', type=str, default=None)
-    targsion.parser.add_argument('--target_class', type=int, default=239)
-    targsion.parser.add_argument('--json', type=str)
+    tOption.parser.add_argument('--args', type=str, default=None, help='json with all arguments')
+    tOption.parser.add_argument('--out', type=str, default='./output')
+    tOption.parser.add_argument('--gan_type', type=str, choices=WEIGHTS.keys(), default='StyleGAN')
+    tOption.parser.add_argument('--gan_weights', type=str, default=None)
+    tOption.parser.add_argument('--target_class', type=int, default=239)
+    tOption.parser.add_argument('--json', type=str)
 
-    targsion.parser.add_argument('--deformator', type=str, default='ortho',
+    tOption.parser.add_argument('--deformator', type=str, default='ortho',
                         choices=DEFORMATOR_TYPE_DICT.keys())
-    targsion.parser.add_argument('--deformator_random_init', type=bool, default=False)
+    tOption.parser.add_argument('--deformator_random_init', type=bool, default=False)
 
-    targsion.parser.add_argument('--shift_predictor_size', type=int)
-    targsion.parser.add_argument('--shift_predictor', type=str,
+    tOption.parser.add_argument('--shift_predictor_size', type=int)
+    tOption.parser.add_argument('--shift_predictor', type=str,
                         choices=['ResNet', 'LeNet'], default='ResNet')
-    targsion.parser.add_argument('--shift_distribution_key', type=str,
+    tOption.parser.add_argument('--shift_distribution_key', type=str,
                         choices=SHIFT_DISTRIDUTION_DICT.keys())
 
-    targsion.parser.add_argument('--seed', type=int, default=2)
-    targsion.parser.add_argument('--device', type=int, default=0)
+    tOption.parser.add_argument('--seed', type=int, default=2)
+    tOption.parser.add_argument('--device', type=int, default=0)
+    tOption.parser.add_argument('--img_size', type=int, default=512)
 
-    targsion.parser.add_argument('--continue_train', type=bool, default=False)
-    targsion.parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
-    targsion.parser.add_argument('--shift_predictor_path', type=str, default='output/models/shift_predictor_190000.pt')
+    tOption.parser.add_argument('--continue_train', type=bool, default=False)
+    tOption.parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
+    tOption.parser.add_argument('--shift_predictor_path', type=str, default='output/models/shift_predictor_190000.pt')
 
-    args = targsion.parse()
+    args = tOption.parse()
     torch.cuda.set_device(args.device)
     random.seed(args.seed)
     torch.random.manual_seed(args.seed)
@@ -89,8 +90,7 @@ def main():
     if args.shift_predictor == 'ResNet':
         shift_predictor = ResNetShiftPredictor(G.dim_z, args.shift_predictor_size).cuda()
     elif args.shift_predictor == 'LeNet':
-        shift_predictor = LeNetShiftPredictor(
-            G.dim_z, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
+        shift_predictor = LeNetShiftPredictor(G.dim_z, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
     if args.continue_train:
         deformator = LatentDeformator(G.dim_z,
                                       type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
@@ -98,6 +98,7 @@ def main():
 
         shift_predictor.load_state_dict(torch.load(args.shift_predictor_path, map_location=torch.device('cpu')))
     else:
+        print("init deformator")
         deformator = LatentDeformator(G.dim_z, 
             type=DEFORMATOR_TYPE_DICT[args.deformator], 
             random_init=args.deformator_random_init).cuda()
@@ -107,15 +108,15 @@ def main():
 
     transform_type = ['zoom','shiftx','color','shifty']
     transform_model = EasyDict()
-    for a_type in transform_type: 
+    for a_type in transform_type:
         model = graphs.find_model_using_name(args.model, args.transform)
         g = model(**graph_kwargs)
-        transform_model.a_type = EasyDict(model=g)
+        transform_model[a_type] = EasyDict(model=g)
 
     # training
     args.shift_distribution = SHIFT_DISTRIDUTION_DICT[args.shift_distribution_key]
     args.deformation_loss = DEFORMATOR_LOSS_DICT[args.deformation_loss]
-    trainer = Trainer(params=Params(**args.__dict__), out_dir=args.out, out_json=args.json)
+    trainer = Trainer(params=Params(**args.__dict__), out_dir=args.out, out_json=args.json, continue_train=args.continue_train)
     trainer.train(G, deformator, shift_predictor, transform_model)
 
 
