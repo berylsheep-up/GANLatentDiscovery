@@ -103,8 +103,6 @@ def main():
             random_init=args.deformator_random_init).cuda()
 
     # transform
-
-
     graph_kwargs = util.set_graph_kwargs(args)
 
     transform_type = ['zoom','shiftx','color','shifty']
