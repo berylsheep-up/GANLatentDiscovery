@@ -225,7 +225,6 @@ class Trainer(object):
                 alpha_for_graph, alpha_for_target = transform_model[t_model].model.get_train_alpha(minibatch = 1)
                 transform_model[t_model].alpha_for_graph = alpha_for_graph
                 transform_model[t_model].alpha_for_target = alpha_for_target
-            print(transform_model)
             # alpha替换shift
             for index, target_indice in enumerate(target_indices):
                 if target_indice == 0:

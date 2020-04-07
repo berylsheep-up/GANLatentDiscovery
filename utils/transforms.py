@@ -33,8 +33,6 @@ class ColorTransform():
         ''' get an alpha for training, return in format
             alpha_val_for_graph, alpha_val_for get_target_np'''
         batch_size = minibatch
-        print(self.channel)
-        print(self.num_channels)
         if self.walk_type == 'linear':
             if self.channel is None:
                 alpha_val = np.random.random(size=(batch_size, self.num_channels))-0.5
