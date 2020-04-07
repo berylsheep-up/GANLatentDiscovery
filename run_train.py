@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 from constants import DEFORMATOR_TYPE_DICT, DEFORMATOR_LOSS_DICT, SHIFT_DISTRIDUTION_DICT, WEIGHTS
+from graphs.stylegan.constants import *
 from models.gan_load import make_big_gan, make_proggan, make_external, make_stylegan
 from latent_deformator import LatentDeformator
 from latent_shift_predictor import ResNetShiftPredictor, LeNetShiftPredictor
@@ -33,7 +34,7 @@ def main():
     tOption.parser.add_argument('--target_class', type=int, default=239)
     tOption.parser.add_argument('--json', type=str)
 
-    tOption.parser.add_argument('--deformator', type=str, default='ortho',
+    tOption.parser.add_argument('--deformator', type=str, default='proj',
                         choices=DEFORMATOR_TYPE_DICT.keys())
     tOption.parser.add_argument('--deformator_random_init', type=bool, default=False)
 
@@ -45,7 +46,7 @@ def main():
 
     tOption.parser.add_argument('--seed', type=int, default=2)
     tOption.parser.add_argument('--device', type=int, default=0)
-    tOption.parser.add_argument('--img_size', type=int, default=512)
+    tOption.parser.add_argument('--w_size', type=int, default=512, help='how many direction are calculate')
 
     tOption.parser.add_argument('--continue_train', type=bool, default=False)
     tOption.parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
@@ -79,27 +80,32 @@ def main():
     if args.gan_type == 'BigGAN':
         G = make_big_gan(weights_path, args.target_class).eval()
     elif args.gan_type == 'StyleGAN':
-        G = make_stylegan(weights_path)
+        G = make_stylegan(weights_path, net_info[args.stylegan.dataset]['resolution']).eval()
     elif args.gan_type == 'ProgGAN':
         G = make_proggan(weights_path).eval()
     else:
         G = make_external(weights_path).eval()
 
+    #判断是对z还是w做latent code
+    if args.model =='stylegan':
+        assert(args.stylegan.latent in ['z', 'w']), 'unknown latent space'
+        if args.stylegan.latent == z:
+            target_dim = G.dim_z
+        else:
+            target_dim = G.dim_w
 
-    
+
     if args.shift_predictor == 'ResNet':
-        shift_predictor = ResNetShiftPredictor(G.dim_z, args.shift_predictor_size).cuda()
+        shift_predictor = ResNetShiftPredictor(args.w_size, args.shift_predictor_size).cuda()
     elif args.shift_predictor == 'LeNet':
-        shift_predictor = LeNetShiftPredictor(G.dim_z, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
+        shift_predictor = LeNetShiftPredictor(args.w_size, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
     if args.continue_train:
-        deformator = LatentDeformator(G.dim_z,
-                                      type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
+        deformator = LatentDeformator(target_dim=target_dim, out_dim=args.w_size, type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
         deformator.load_state_dict(torch.load(args.deformator_path, map_location=torch.device('cpu')))
 
         shift_predictor.load_state_dict(torch.load(args.shift_predictor_path, map_location=torch.device('cpu')))
     else:
-        print("init deformator")
-        deformator = LatentDeformator(G.dim_z, 
+        deformator = LatentDeformator(target_dim=target_dim, out_dim=args.w_size, 
             type=DEFORMATOR_TYPE_DICT[args.deformator], 
             random_init=args.deformator_random_init).cuda()
 

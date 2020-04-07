@@ -15,8 +15,8 @@ class TrainOptions():
     def initialize(self):
         parser = self.parser
         parser.add_argument('--config_file', type=argparse.FileType(mode='r'), help="configuration yml file")
-        self.parser.add_argument('--overwrite_config', action='store_true', help="overwrite config files if they exist")
-        self.parser.add_argument('--model', default='stylegan', help="pretrained model to use, e.g. biggan, stylegan")
+        parser.add_argument('--overwrite_config', action='store_true', help="overwrite config files if they exist")
+        parser.add_argument('--model', default='stylegan', help="pretrained model to use, e.g. biggan, stylegan")
         parser.add_argument('--transform', default="zoom", help="transform operation, e.g. zoom, shiftx, color, rotate2d"),
         parser.add_argument('--num_samples', type=int, default=20000, help='number of latent z samples')
         parser.add_argument('--loss', type=str, default='l2', help='loss to use for training', choices=['l2', 'lpips'])

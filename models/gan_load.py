@@ -8,7 +8,7 @@ from models.ProgGAN.model import Generator as ProgGenerator
 from models.StyleGAN.stylegan_layers import  G_mapping,G_synthesis
 from GANs.load import load_model_from_state_dict
 from collections import OrderedDict
-
+import math
 
 class ConditionedBigGAN(nn.Module):
     def __init__(self, big_gan, target_classes=(239)):
@@ -64,19 +64,23 @@ def make_proggan(weights_root):
     setattr(model, 'dim_z', [512, 1, 1])
     return model
 
-def make_stylegan(weights_root):
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+def make_stylegan(weights_root, resolution):
+    # device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     g_all = nn.Sequential(OrderedDict([
     ('g_mapping', G_mapping()),
     #('truncation', Truncation(avg_latent)),
-    ('g_synthesis', G_synthesis(resolution=512))    
+    ('g_synthesis', G_synthesis(resolution=resolution))    
     ]))
 
-    g_all.load_state_dict(torch.load(weights_root, map_location=device))
-    g_all.eval()
-    g_all.to(device)
+    g_all.load_state_dict(torch.load(weights_root, map_location=torch.device('cpu')))
+    g_all.cuda()
 
+    # test, set dim z and w , w+
     setattr(g_all, 'dim_z', [512])
+    setattr(g_all, 'dim_w', [512])
+    times = 2*(math.log(resolution, 2) - 1)
+    setattr(g_all, 'dim_w+', [times, 512])
+
     return g_all
 
 

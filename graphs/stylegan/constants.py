@@ -9,5 +9,6 @@ net_info = dict(
         coco_id=None,
         pascal_id=None,
         is_face=True,
+        resolution=512,
     ),
 )
