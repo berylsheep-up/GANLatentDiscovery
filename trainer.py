@@ -36,7 +36,7 @@ class Params(object):
         self.shift_predictor_lr = 0.0001
         self.n_steps = 5*int(1e+5)
         self.batch_size = 6
-        self.max_latent_ind = 10 #120
+        self.max_latent_ind = 120
 
         self.label_weight = 2.0
         self.shift_weight = 0.5
@@ -310,7 +310,7 @@ class Trainer(object):
             avg_label_loss.add(logit_loss.item())
             avg_shift_loss.add(shift_loss)
             avg_deformator_loss.add(z_loss.item())
-            avg_transform_loss.add(transform_loss.item())
+            avg_transform_loss.add(transform_loss)
 
             self.log(G, deformator, shift_predictor, step, avgs)
 

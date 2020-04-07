@@ -7,7 +7,7 @@ class ColorTransform(ColorTransform):
     def __init__(self, channel=None):
         super().__init__(channel)
 
-    def get_target_np(self, outputs_zs, alpha):
+    def get_target_np(self, outputs_zs, alpha, color_channel=-1):
         # if not hasattr(self, 'MODEL'):
         #     self.MODEL = deeplab.load_model(self.sess)
         if not np.any(alpha): # alpha is all zeros
@@ -15,12 +15,12 @@ class ColorTransform(ColorTransform):
 
         # if no pascal id just do normal Color get target
         if self.dataset_args['pascal_id'] is None:
-            return super().get_target_np(outputs_zs, alpha)
+            return super().get_target_np(outputs_zs, alpha, color_channel)
 
         assert(outputs_zs.shape[0] == alpha.shape[0])
 
         # uncomment to use standard get_target for color
-        return super().get_target_np(outputs_zs, alpha)
+        return super().get_target_np(outputs_zs, alpha, color_channel)
 
         # uncomment to add a segmentation map to color
         # ## segmap - only change the segmented pixels, but enforce loss elsewhere too 

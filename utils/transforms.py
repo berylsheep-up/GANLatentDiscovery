@@ -43,7 +43,6 @@ class ColorTransform():
             # graph and target use the same slider value
             alpha_val_for_graph = alpha_val
             alpha_val_for_target = alpha_val
-            print(alpha_val)
             return alpha_val_for_graph, alpha_val_for_target
         elif self.walk_type == 'NNz':
             alpha_val = np.random.randint(-self.N_f, self.N_f+1)
