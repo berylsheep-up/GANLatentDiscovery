@@ -9,7 +9,7 @@ class TransformGraph():
         self.N_f = N_f # NN num_steps
         self.eps = eps # NN step_size
         self.dataset_args = constants.net_info[stylegan_opts.dataset]
-        self.img_size = self.dataset_args.img_size
+        self.img_size = self.dataset_args['img_size']
         self.dataset_name = stylegan_opts.dataset
         self.latent = stylegan_opts.latent
         if hasattr(stylegan_opts, 'truncation_psi'):
