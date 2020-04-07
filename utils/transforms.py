@@ -21,7 +21,7 @@ class ColorTransform():
         # channel: 指定RGB channel
         mask_out = np.ones(outputs_zs.shape)
         if not np.any(alpha): # alpha is all zeros
-            return outputs_zs, mask_out
+            return outputs_zs, mask_out, np.count_nonzero(mask_out)
         target_fn = np.copy(outputs_zs)
         for b in range(alpha.shape[0]):
             #for i in range(self.num_channels):
@@ -93,7 +93,7 @@ class ColorTransform():
 #         ''' return target image and mask '''
 #         mask_out = np.ones(outputs_zs.shape)
 #         if not np.any(alpha): # alpha is all zeros
-#             return outputs_zs, mask_out
+#             return outputs_zs, mask_out, np.count_nonzero(mask_out)
 #         target_fn = np.copy(outputs_zs)
 #         scaled_alpha = np.copy(alpha)
 #         # we assume alpha in [-1,1]
@@ -152,7 +152,7 @@ class ZoomTransform():
         img_size = outputs_zs.shape[1]
         mask_fn = np.ones(outputs_zs.shape)
         if alpha == 1:
-            return outputs_zs, mask_fn
+            return outputs_zs, mask_fn, np.count_nonzero(mask_fn)
         new_size = int(alpha*img_size)
         ## crop - zoom in
         if alpha < 1:
@@ -295,7 +295,7 @@ class ShiftXTransform(ShiftTransform):
         img_size = outputs_zs.shape[1]
         mask_fn = np.ones(outputs_zs.shape)
         if alpha == 0:
-            return outputs_zs, mask_fn
+            return outputs_zs, mask_fn, np.count_nonzero(mask_fn)
 
         M = np.float32([[1,0,alpha],[0,1,0]])
         target_fn = np.zeros(outputs_zs.shape)
@@ -306,14 +306,14 @@ class ShiftXTransform(ShiftTransform):
 
         mask_out[np.nonzero(mask_out)] = 1.
         assert(np.setdiff1d(mask_out, [0., 1.]).size == 0)
-        return target_fn, mask_out, np.count_nonzero(mask_out), np.count_nonzero(mask_out)
+        return target_fn, mask_out, np.count_nonzero(mask_out)
 
 class ShiftYTransform(ShiftTransform):
     def get_target_np(self, outputs_zs, alpha):
         img_size = outputs_zs.shape[1]
         mask_fn = np.ones(outputs_zs.shape)
         if alpha == 0:
-            return outputs_zs, mask_fn
+            return outputs_zs, mask_fn, np.count_nonzero(mask_fn)
 
         M = np.float32([[1,0,0],[0,1,alpha]])
         target_fn = np.zeros(outputs_zs.shape)
@@ -336,7 +336,7 @@ class ShiftYTransform(ShiftTransform):
 #         mask_fn = np.ones(outputs_zs.shape)
 
 #         if alpha == 0:
-#             return outputs_zs, mask_fn
+#             return outputs_zs, mask_fn, np.count_nonzero(mask_fn)
 
 #         degree = alpha
 
@@ -403,7 +403,7 @@ class ShiftYTransform(ShiftTransform):
 #         mask_fn = np.ones(outputs_zs.shape)
 
 #         if alpha == 0:
-#             return outputs_zs, mask_fn
+#             return outputs_zs, mask_fn, np.count_nonzero(mask_fn)
 
 #         target_fn = np.zeros(outputs_zs.shape)
 #         mask_out = np.zeros(outputs_zs.shape)
