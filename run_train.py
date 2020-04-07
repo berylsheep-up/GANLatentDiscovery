@@ -109,7 +109,7 @@ def main():
     transform_type = ['zoom','shiftx','color','shifty']
     transform_model = EasyDict()
     for a_type in transform_type:
-        model = graphs.find_model_using_name(args.model, args.transform)
+        model = graphs.find_model_using_name(args.model, a_type)
         g = model(**graph_kwargs)
         transform_model[a_type] = EasyDict(model=g)
 

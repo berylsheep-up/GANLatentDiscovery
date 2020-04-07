@@ -220,55 +220,55 @@ def get_transform_graphs(model):
                 return [center_y] # want to return as a list
             return []
 
-    #class Rotate2DGraph(base.TransformGraph,op.Rotate2DTransform):
-        def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, img_size=512, **kwargs):
-            nsliders = 1
-            base.TransformGraph.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
-            op.Rotate2DTransform.__init__(self)
+    # class Rotate2DGraph(base.TransformGraph,op.Rotate2DTransform):
+    #     def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, img_size=512, **kwargs):
+    #         nsliders = 1
+    #         base.TransformGraph.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
+    #         op.Rotate2DTransform.__init__(self)
 
-        def vis_image_batch(self, graph_inputs, filename,
-                            batch_start, wgt=False, wmask=False, num_panels=7,
-                            max_alpha=None, min_alpha=None):
-            if max_alpha is not None and min_alpha is not None:
-                alphas = np.linspace(min_alpha, max_alpha, num_panels)
-            else:
-                alphas = self.vis_alphas(num_panels)
-            zs_batch = graph_inputs[self.z]
+    #     def vis_image_batch(self, graph_inputs, filename,
+    #                         batch_start, wgt=False, wmask=False, num_panels=7,
+    #                         max_alpha=None, min_alpha=None):
+    #         if max_alpha is not None and min_alpha is not None:
+    #             alphas = np.linspace(min_alpha, max_alpha, num_panels)
+    #         else:
+    #             alphas = self.vis_alphas(num_panels)
+    #         zs_batch = graph_inputs[self.z]
 
-            alphas_to_graph = []
-            alphas_to_target = []
-            for a in alphas:
-                slider = self.scale_test_alpha_for_graph(a, zs_batch)
-                alphas_to_graph.append(slider)
-                alphas_to_target.append(a)
-            self.vis_image_batch_alphas(graph_inputs, filename,
-                                        alphas_to_graph, alphas_to_target,
-                                        batch_start, wgt=False, wmask=False)
+    #         alphas_to_graph = []
+    #         alphas_to_target = []
+    #         for a in alphas:
+    #             slider = self.scale_test_alpha_for_graph(a, zs_batch)
+    #             alphas_to_graph.append(slider)
+    #             alphas_to_target.append(a)
+    #         self.vis_image_batch_alphas(graph_inputs, filename,
+    #                                     alphas_to_graph, alphas_to_target,
+    #                                     batch_start, wgt=False, wmask=False)
 
-    #class Rotate3DGraph(base.TransformGraph,op.Rotate3DTransform):
-        def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, img_size=512, **kwargs):
-            nsliders = 1
-            base.TransformGraph.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
-            op.Rotate3DTransform.__init__(self)
+    # class Rotate3DGraph(base.TransformGraph,op.Rotate3DTransform):
+    #     def __init__(self, lr=0.0002, walk_type='NNz', loss='l2', eps=10, N_f=5, img_size=512, **kwargs):
+    #         nsliders = 1
+    #         base.TransformGraph.__init__(self, lr=lr, walk_type=walk_type, nsliders=nsliders, loss=loss, eps=eps, N_f=N_f, img_size=img_size, **kwargs)
+    #         op.Rotate3DTransform.__init__(self)
 
-        def vis_image_batch(self, graph_inputs, filename,
-                            batch_start, wgt=False, wmask=False, num_panels=7,
-                            max_alpha=None, min_alpha=None):
-            if max_alpha is not None and min_alpha is not None:
-                alphas = np.linspace(min_alpha, max_alpha, num_panels)
-            else:
-                alphas = self.vis_alphas(num_panels)
-            zs_batch = graph_inputs[self.z]
+    #     def vis_image_batch(self, graph_inputs, filename,
+    #                         batch_start, wgt=False, wmask=False, num_panels=7,
+    #                         max_alpha=None, min_alpha=None):
+    #         if max_alpha is not None and min_alpha is not None:
+    #             alphas = np.linspace(min_alpha, max_alpha, num_panels)
+    #         else:
+    #             alphas = self.vis_alphas(num_panels)
+    #         zs_batch = graph_inputs[self.z]
 
-            alphas_to_graph = []
-            alphas_to_target = []
-            for a in alphas:
-                slider = self.scale_test_alpha_for_graph(a, zs_batch)
-                alphas_to_graph.append(slider)
-                alphas_to_target.append(a)
-            self.vis_image_batch_alphas(graph_inputs, filename,
-                                        alphas_to_graph, alphas_to_target,
-                                        batch_start, wgt=False, wmask=False)
+    #         alphas_to_graph = []
+    #         alphas_to_target = []
+    #         for a in alphas:
+    #             slider = self.scale_test_alpha_for_graph(a, zs_batch)
+    #             alphas_to_graph.append(slider)
+    #             alphas_to_target.append(a)
+    #         self.vis_image_batch_alphas(graph_inputs, filename,
+    #                                     alphas_to_graph, alphas_to_target,
+    #                                     batch_start, wgt=False, wmask=False)
 
 
     # graphs = [ColorGraph, ColorLabGraph, ZoomGraph, ShiftXGraph, ShiftYGraph,

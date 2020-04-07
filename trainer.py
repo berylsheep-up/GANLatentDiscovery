@@ -225,17 +225,17 @@ class Trainer(object):
                 alpha_for_graph, alpha_for_target = transform_model[t_model].model.get_train_alpha(minibatch = 1)
                 transform_model[t_model].alpha_for_graph = alpha_for_graph
                 transform_model[t_model].alpha_for_target = alpha_for_target
+            print(transform_model)
             # alpha替换shift
             for index, target_indice in enumerate(target_indices):
                 if target_indice == 0:
-                    shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][0])
+                    shifts[index] = transform_model.color.alpha_for_graph[0][0]
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][0]
                 elif target_indice == 1:
-                    shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][1])
+                    shifts[index] = transform_model.color.alpha_for_graph[0][1]
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][1]
                 elif target_indice == 2:
-                    print(transform_model.color.alpha_for_graph)
-                    shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][2])
+                    shifts[index] = transform_model.color.alpha_for_graph[0][2]
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][2]
                 elif target_indice == 3:
                     shifts[index] = torch.from_numpy(transform_model.zoom.alpha_for_graph[0])
