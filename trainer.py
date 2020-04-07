@@ -234,6 +234,7 @@ class Trainer(object):
                     shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][1])
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][1]
                 elif target_indice == 2:
+                    print(transform_model.color.alpha_for_graph)
                     shifts[index] = torch.from_numpy(transform_model.color.alpha_for_graph[0][2])
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][2]
                 elif target_indice == 3:
