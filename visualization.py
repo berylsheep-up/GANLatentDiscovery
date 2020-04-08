@@ -18,7 +18,7 @@ def fig_to_image(fig):
 
 
 @torch.no_grad()
-def interpolate(G, z, shifts_r, shifts_count, dim, deformator=None, with_central_border=False):
+def interpolate(G, z, shifts_r, shifts_count, dim, direction_size, deformator=None, with_central_border=False):
     shifted_images = []
     tmp = []
     shift_time = 0
@@ -26,9 +26,9 @@ def interpolate(G, z, shifts_r, shifts_count, dim, deformator=None, with_central
     for shift in np.arange(-shifts_r, shifts_r + 1e-9, shifts_r / shifts_count):
         shift_time += 1
         if deformator is not None:
-            z_deformed = z + deformator(one_hot(z.shape[1:], shift, dim).cuda())
+            z_deformed = z + deformator(one_hot(dims=direction_size, value=shift, indx=dim).cuda())
         else:
-            z_deformed = z + one_hot(z.shape[1:], shift, dim).cuda()
+            z_deformed = z + one_hot(dims=direction_size, value=shift, indx=dim).cuda()
         shifted_image = G(z_deformed).cpu()
         if shift == 0.0 and with_central_border:
             shifted_image = add_border(shifted_image)
@@ -56,7 +56,7 @@ def add_border(tensor):
 @torch.no_grad()
 def make_interpolation_chart(G, deformator=None, z=None,
                              shifts_r=10, shifts_count=5,
-                             dims=None, dims_count=10, texts=None, **kwargs):
+                             dims=None, dims_count=10, texts=None, direction_size=10, **kwargs):
     with_deformation = deformator is not None
     if with_deformation:
         deformator_is_training = deformator.training
@@ -69,9 +69,10 @@ def make_interpolation_chart(G, deformator=None, z=None,
         original_img = G(z).cpu()
     imgs = []
     if dims is None:
-        dims = range(dims_count)
+        dim_range = min(dims_count, direction_size)
+        dims = range(dim_range)
     for i in dims:
-        imgs.append(interpolate(G, z, shifts_r, shifts_count, i, deformator))
+        imgs.append(interpolate(G, z, shifts_r, shifts_count, i, direction_size, deformator))
 
     if z.shape[0] == 1:
         rows_count = len(imgs) + 1

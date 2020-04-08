@@ -70,7 +70,7 @@ def main():
 
     fig = make_interpolation_chart(G, deformator=deformator, z = z,
                              shifts_r=10, shifts_count=3,
-                             dims=None, dims_count=10, texts=None, dpi=1024)
+                             dims=None, dims_count=10, texts=None, dpi=1024, direction_size=args.direction_size)
     fig_to_image(fig).convert("RGB").save(os.path.join(args.images_dir, 'test_{}.jpg'.format(args.seed)))
 
 if __name__ == '__main__':

@@ -18,15 +18,19 @@ class DeformatorType(Enum):
 
 
 class LatentDeformator(nn.Module):
-    def __init__(self, target_dim, inner_dim=1024, out_dim=None,
+    def __init__(self, direction_size, inner_dim=1024, out_dim=None,
                  type=DeformatorType.FC, random_init=False):
         super(LatentDeformator, self).__init__()
         self.type = type
-        self.input_dim = np.product(target_dim)
+        self.input_dim = np.product(direction_size)
         # np.product 将数组内所有元素乘起来
+
         self.out_dim = out_dim
         if out_dim is None:
             self.out_dim = self.input_dim
+        elif isinstance(self.out_dim, list):
+            self.out_dim = self.out_dim[0]
+
 
         if self.type == DeformatorType.FC:
             self.fc1 = nn.Linear(self.input_dim, inner_dim)
@@ -92,8 +96,8 @@ class LatentDeformator(nn.Module):
         elif self.type == DeformatorType.RANDOM:
             self.linear = self.linear.to(input.device)
             out = F.linear(input, self.linear)
-
-        return out.view(original_shape)
+        #return out.view(original_shape)
+        return out
 
 
 def normal_projection_stat(x):

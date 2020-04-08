@@ -27,7 +27,7 @@ class TrainOptions():
         parser.add_argument('--name', type=str, help="experiment name, saved within models_dir")
         parser.add_argument('--suffix', type=str, help="suffix for experiment name")
         parser.add_argument('--prefix', type=str, help="prefix for experiment name")
-        parser.add_argument("--gpu", default="0", type=str, help='GPUs to use (leave blank for CPU only)')
+        #parser.add_argument("--gpu", default="0", type=str, help='GPUs to use (leave blank for CPU only)')
 
         # NN walk parameters
         group = parser.add_argument_group('nn', 'parameters used to specify NN walk')

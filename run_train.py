@@ -25,7 +25,7 @@ def main():
     tOption = TrainOptions()
     
     for key, val in Params().__dict__.items():
-        tOption.parser.add_argument('--{}'.format(key), type=type(val), default=None)
+        tOption.parser.add_argument('--{}'.format(key), type=type(val), default=val)
 
     tOption.parser.add_argument('--args', type=str, default=None, help='json with all arguments')
     tOption.parser.add_argument('--out', type=str, default='./output')
@@ -46,8 +46,7 @@ def main():
 
     tOption.parser.add_argument('--seed', type=int, default=2)
     tOption.parser.add_argument('--device', type=int, default=0)
-    tOption.parser.add_argument('--w_size', type=int, default=512, help='how many direction are calculate')
-
+    
     tOption.parser.add_argument('--continue_train', type=bool, default=False)
     tOption.parser.add_argument('--deformator_path', type=str, default='output/models/deformator_90000.pt')
     tOption.parser.add_argument('--shift_predictor_path', type=str, default='output/models/shift_predictor_190000.pt')
@@ -89,23 +88,23 @@ def main():
     #判断是对z还是w做latent code
     if args.model =='stylegan':
         assert(args.stylegan.latent in ['z', 'w']), 'unknown latent space'
-        if args.stylegan.latent == z:
+        if args.stylegan.latent == 'z':
             target_dim = G.dim_z
         else:
             target_dim = G.dim_w
 
 
     if args.shift_predictor == 'ResNet':
-        shift_predictor = ResNetShiftPredictor(args.w_size, args.shift_predictor_size).cuda()
+        shift_predictor = ResNetShiftPredictor(args.direction_size, args.shift_predictor_size).cuda()
     elif args.shift_predictor == 'LeNet':
-        shift_predictor = LeNetShiftPredictor(args.w_size, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
+        shift_predictor = LeNetShiftPredictor(args.direction_size, 1 if args.gan_type == 'SN_MNIST' else 3).cuda()
     if args.continue_train:
-        deformator = LatentDeformator(target_dim=target_dim, out_dim=args.w_size, type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
+        deformator = LatentDeformator(direction_size=args.direction_size, out_dim=target_dim, type=DEFORMATOR_TYPE_DICT[args.deformator]).cuda()
         deformator.load_state_dict(torch.load(args.deformator_path, map_location=torch.device('cpu')))
 
         shift_predictor.load_state_dict(torch.load(args.shift_predictor_path, map_location=torch.device('cpu')))
     else:
-        deformator = LatentDeformator(target_dim=target_dim, out_dim=args.w_size, 
+        deformator = LatentDeformator(direction_size=args.direction_size, out_dim=target_dim, 
             type=DEFORMATOR_TYPE_DICT[args.deformator], 
             random_init=args.deformator_random_init).cuda()
 
@@ -121,7 +120,6 @@ def main():
 
     # training
     args.shift_distribution = SHIFT_DISTRIDUTION_DICT[args.shift_distribution_key]
-    args.deformation_loss = DEFORMATOR_LOSS_DICT[args.deformation_loss]
     trainer = Trainer(params=Params(**args.__dict__), out_dir=args.out, out_json=args.json, continue_train=args.continue_train)
     trainer.train(G, deformator, shift_predictor, transform_model)
 

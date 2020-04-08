@@ -8,6 +8,7 @@ def find_model_using_name(model, transform):
     model_filename = "graphs.transform_graph"
     modellib = importlib.import_module(model_filename)
     graphs = modellib.get_transform_graphs(model)
+    print("Getting {} graphs for {} model...".format(transform, model))
 
     model = None
     target_transform = transform.replace('_', '') + 'graph'

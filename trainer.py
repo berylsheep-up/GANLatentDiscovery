@@ -23,7 +23,7 @@ class ShiftDistribution(Enum):
     NORMAL = 0,
     UNIFORM = 1,
 
-class DeformatorType(Enum):
+class TransformType(Enum):
     RED = 0
     GREEN = 1
     BLUE = 2
@@ -42,12 +42,12 @@ class Params(object):
         self.deformator_lr = 0.0001
         self.shift_predictor_lr = 0.0001
         self.n_steps = 5*int(1e+5)
-        self.batch_size = 6
+        self.batch_size = 2
         self.max_latent_ind = 10
 
         self.label_weight = 2.0
         self.shift_weight = 0.5
-        self.transform_weight = 1
+        self.transform_weight = 20
 
         self.deformation_loss_weight = 2.0
         self.z_norm_loss_low_bound = 1.1
@@ -58,6 +58,8 @@ class Params(object):
         self.steps_per_save = 10000
         self.steps_per_img_log = 1000
         self.steps_per_backup = 1000
+
+        self.direction_size = 10
 
         for key, val in kwargs.items():
             if val is not None:
@@ -88,6 +90,7 @@ class Trainer(object):
 
     def make_shifts(self, latent_dim, shift=None):
         '''
+        latent_dim: how many directions 
         Returns:
             target_indices: one hot's index
             shifts: z_shift one hot处的值，即偏移量
@@ -135,7 +138,7 @@ class Trainer(object):
         for z, prefix in zip([noise, self.fixed_test_noise], ['rand', 'fixed']):
             fig = make_interpolation_chart(
                 G, deformator, z=z, shifts_r=3 * self.p.shift_scale, shifts_count=3, dims_count=15,
-                dpi=500)
+                dpi=500, direction_size=self.p.direction_size)
 
             self.writer.add_figure('{}_deformed_interpolation'.format(prefix), fig, step)
             fig_to_image(fig).convert("RGB").save(
@@ -226,7 +229,7 @@ class Trainer(object):
 
             z = make_noise(self.p.batch_size, G.dim_z).cuda()
             z_orig = torch.clone(z)
-            target_indices, shifts, z_shift = self.make_shifts(G.dim_z)
+            target_indices, shifts, z_shift = self.make_shifts(self.p.direction_size)
 
             for t_model in transform_model:
                 alpha_for_graph, alpha_for_target = transform_model[t_model].model.get_train_alpha(minibatch = 1)
@@ -234,27 +237,27 @@ class Trainer(object):
                 transform_model[t_model].alpha_for_target = alpha_for_target
             # alpha替换shift
             for index, target_indice in enumerate(target_indices):
-                if target_indice == DeformatorType.RED:
+                if target_indice.item() == TransformType.RED.value:
                     shifts[index] = transform_model.color.alpha_for_graph[0][0]
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][0]
                 
-                elif target_indice == DeformatorType.GREEN:
+                elif target_indice.item() == TransformType.GREEN.value:
                     shifts[index] = transform_model.color.alpha_for_graph[0][1]
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][1]
                 
-                elif target_indice == DeformatorType.BLUE:
+                elif target_indice.item() == TransformType.BLUE.value:
                     shifts[index] = transform_model.color.alpha_for_graph[0][2]
                     z_shift[index][target_indice] = transform_model.color.alpha_for_target[0][2]
                 
-                elif target_indice == DeformatorType.ZOOM:
+                elif target_indice.item() == TransformType.ZOOM.value:
                     shifts[index] = torch.from_numpy(transform_model.zoom.alpha_for_graph[0])
                     z_shift[index][target_indice] = transform_model.zoom.alpha_for_target
                 
-                elif target_indice == DeformatorType.SHIFTX:
+                elif target_indice.item() == TransformType.SHIFTX.value:
                     shifts[index] = torch.from_numpy(transform_model.shiftx.alpha_for_graph[0])
                     z_shift[index][target_indice] = transform_model.shiftx.alpha_for_target
                 
-                elif target_indice == DeformatorType.SHIFTY:
+                elif target_indice.item() == TransformType.SHIFTY.value:
                     shifts[index] = torch.from_numpy(transform_model.shifty.alpha_for_graph[0])
                     z_shift[index][target_indice] = transform_model.shifty.alpha_for_target
 
@@ -272,22 +275,23 @@ class Trainer(object):
             transform_loss = 0
             for index, target_indice in enumerate(target_indices):
                 target_number = target_indice.item()
-                if target_number in [DeformatorType.RED, DeformatorType.GREEN, DeformatorType.BLUE]:
+                if target_number in [TransformType.RED.value, TransformType.GREEN.value, TransformType.BLUE.value]:
                     transform_loss += self.cal_transform_loss(transform_model.color, criterion, imgs[index], color_channel=target_number)
                 
-                elif target_number == DeformatorType.ZOOM:
+                elif target_number == TransformType.ZOOM.value:
                     transform_loss += self.cal_transform_loss(
                         transform_model=transform_model.zoom, criterion=criterion, out_img=imgs[index])
                 
-                elif target_number == DeformatorType.SHIFTX:
+                elif target_number == TransformType.SHIFTX.value:
                     transform_loss += self.cal_transform_loss(transform_model.shiftx, criterion, imgs[index])
                 
-                elif target_number == DeformatorType.SHIFTY:
+                elif target_number == TransformType.SHIFTY.value:
                     transform_loss += self.cal_transform_loss(transform_model.shifty, criterion, imgs[index])
             transform_loss = self.p.transform_weight * transform_loss
 
 
             logits, shift_prediction = shift_predictor(imgs, imgs_shifted)
+            print(logits)
             logit_loss = self.p.label_weight * self.cross_entropy(logits, target_indices)
             shift_loss = self.p.shift_weight * torch.mean(torch.abs(shift_prediction - shifts))
             # Loss
