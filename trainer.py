@@ -57,7 +57,7 @@ class Params(object):
         self.steps_per_log = 10
         self.steps_per_save = 10000
         self.steps_per_img_log = 1000
-        self.steps_per_backup = 1000
+        self.steps_per_backup = 20
 
         self.direction_size = 10
 
@@ -172,7 +172,7 @@ class Trainer(object):
         deformator.eval()
         shift_predictor.eval()
 
-        accuracy = validate_classifier(G, deformator, shift_predictor, trainer=self)
+        accuracy = validate_classifier(G, deformator, shift_predictor, trainer=self, direction_size=self.p.direction_size)
         self.writer.add_scalar('accuracy', accuracy.item(), step)
 
         deformator.train()
@@ -291,7 +291,6 @@ class Trainer(object):
 
 
             logits, shift_prediction = shift_predictor(imgs, imgs_shifted)
-            print(logits)
             logit_loss = self.p.label_weight * self.cross_entropy(logits, target_indices)
             shift_loss = self.p.shift_weight * torch.mean(torch.abs(shift_prediction - shifts))
             # Loss
@@ -335,7 +334,7 @@ class Trainer(object):
 
 
 @torch.no_grad()
-def validate_classifier(G, deformator, shift_predictor, params_dict=None, trainer=None):
+def validate_classifier(G, deformator, shift_predictor, params_dict=None, trainer=None, direction_size=10):
     n_steps = 100
     if trainer is None:
         trainer = Trainer(params=Params(**params_dict), verbose=False)
@@ -343,7 +342,7 @@ def validate_classifier(G, deformator, shift_predictor, params_dict=None, traine
     percents = torch.empty([n_steps])
     for step in range(n_steps):
         z = make_noise(trainer.p.batch_size, G.dim_z).cuda()
-        target_indices, shifts, z_shift = trainer.make_shifts(G.dim_z)
+        target_indices, shifts, z_shift = trainer.make_shifts(direction_size)
 
         if trainer.p.global_deformation:
             z_shifted = deformator(z + z_shift)
